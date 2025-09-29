@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "451614151600",
+    "firebase_url": "https://waos2-2da61-default-rtdb.firebaseio.com",
+    "project_id": "waos2-2da61",
+    "storage_bucket": "waos2-2da61.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:451614151600:android:6a07c03b49fc897fdc3c75",
+        "android_client_info": {
+          "package_name": "com.example.lunglyv1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPAozBL1aY11xyA2cb8sLWIHpDtKfzLX8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:451614151600:android:04e89b59b15b0781dc3c75",
+        "android_client_info": {
+          "package_name": "com.example.untitled"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPAozBL1aY11xyA2cb8sLWIHpDtKfzLX8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
