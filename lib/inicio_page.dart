@@ -15,33 +15,61 @@ class InicioPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Card(
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    Colors.white,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.favorite,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 32,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '¡Bienvenido!',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Text(
-                    '¡Bienvenido!',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Esperamos que tengas un excelente día',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.grey[600],
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Hola ${user?.email ?? 'Usuario'}',
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    user?.email ?? 'Usuario',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'Panel Principal',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              'Tu Centro de Bienestar',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
           ),
           const SizedBox(height: 16),
           GridView.count(
@@ -51,29 +79,33 @@ class InicioPage extends StatelessWidget {
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
             children: [
-              _buildDashboardCard(
+              _buildWellnessCard(
                 context,
                 icon: Icons.monitor_heart,
-                title: 'Salud',
-                color: Colors.blue,
+                title: 'Estado de Salud',
+                description: 'Monitorea tu progreso',
+                color: Theme.of(context).colorScheme.primary,
               ),
-              _buildDashboardCard(
+              _buildWellnessCard(
                 context,
-                icon: Icons.history,
-                title: 'Historial',
-                color: Colors.green,
+                icon: Icons.spa,
+                title: 'Ejercicios',
+                description: 'Respiración y relajación',
+                color: Theme.of(context).colorScheme.secondary,
               ),
-              _buildDashboardCard(
+              _buildWellnessCard(
                 context,
-                icon: Icons.notifications,
+                icon: Icons.notifications_active,
                 title: 'Recordatorios',
-                color: Colors.orange,
+                description: 'Mantente al día',
+                color: Theme.of(context).colorScheme.tertiary,
               ),
-              _buildDashboardCard(
+              _buildWellnessCard(
                 context,
-                icon: Icons.analytics,
-                title: 'Estadísticas',
-                color: Colors.purple,
+                icon: Icons.help_outline,
+                title: 'Asistencia',
+                description: 'Estamos para ayudarte',
+                color: Colors.purple[300]!,
               ),
             ],
           ),
@@ -82,31 +114,56 @@ class InicioPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboardCard(
+  Widget _buildWellnessCard(
     BuildContext context, {
     required IconData icon,
     required String title,
+    required String description,
     required Color color,
   }) {
     return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          // Handle card tap
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 48, color: color),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(0.1),
+              Colors.white,
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 40, color: color),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: color,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       ),
