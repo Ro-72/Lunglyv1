@@ -9,6 +9,8 @@ class Treatment {
   final bool isActive;
   final String userId;
   final double progress;
+  final bool isCompleted;
+  final DateTime? lastDose;
 
   Treatment({
     required this.id,
@@ -19,6 +21,8 @@ class Treatment {
     this.isActive = true,
     required this.userId,
     this.progress = 0.0,
+    this.isCompleted = false,
+    this.lastDose,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +34,8 @@ class Treatment {
       'isActive': isActive,
       'userId': userId,
       'progress': progress,
+      'isCompleted': isCompleted,
+      'lastDose': lastDose,
     };
   }
 
@@ -43,6 +49,27 @@ class Treatment {
       isActive: map['isActive'] ?? true,
       userId: map['userId'],
       progress: map['progress'] ?? 0.0,
+      isCompleted: map['isCompleted'] ?? false,
+      lastDose: map['lastDose'] != null ? (map['lastDose'] as Timestamp).toDate() : null,
+    );
+  }
+
+  Treatment copyWith({
+    bool? isCompleted,
+    DateTime? nextDose,
+    DateTime? lastDose,
+  }) {
+    return Treatment(
+      id: id,
+      name: name,
+      dosage: dosage,
+      frequency: frequency,
+      nextDose: nextDose ?? this.nextDose,
+      isActive: isActive,
+      userId: userId,
+      progress: progress,
+      isCompleted: isCompleted ?? this.isCompleted,
+      lastDose: lastDose ?? this.lastDose,
     );
   }
 }

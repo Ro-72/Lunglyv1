@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/chatgpt_service.dart';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -10,34 +11,54 @@ class ChatbotPage extends StatefulWidget {
 class _ChatbotPageState extends State<ChatbotPage> {
   final _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
+  final ChatGPTService _chatGPTService = ChatGPTService();
+  bool _isLoading = false;
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
+    final userMessage = _messageController.text;
     setState(() {
       _messages.add(
         ChatMessage(
-          text: _messageController.text,
+          text: userMessage,
           isUser: true,
           timestamp: DateTime.now(),
         ),
       );
+      _isLoading = true;
+    });
+    _messageController.clear();
 
-      // Simulate bot response
-      Future.delayed(const Duration(seconds: 1), () {
+    try {
+      final response = await _chatGPTService.getMedicalAdvice(userMessage);
+
+      if (mounted) {
         setState(() {
           _messages.add(
             ChatMessage(
-              text: 'Gracias por tu mensaje. ¿En qué puedo ayudarte?',
+              text: response,
               isUser: false,
               timestamp: DateTime.now(),
             ),
           );
+          _isLoading = false;
         });
-      });
-    });
-
-    _messageController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messages.add(
+            ChatMessage(
+              text: 'Lo siento, ocurrió un error. Por favor intenta de nuevo.',
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -45,77 +66,52 @@ class _ChatbotPageState extends State<ChatbotPage> {
     return Column(
       children: [
         Expanded(
-          child:
-              _messages.isEmpty
-                  ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Inicia una conversación',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                  : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      return _buildMessageBubble(message);
-                    },
-                  ),
+          child: _messages.isEmpty
+              ? _buildEmptyState()
+              : _buildMessageList(),
         ),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, -2),
-              ),
-            ],
+        if (_isLoading)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: LinearProgressIndicator(),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    hintText: 'Escribe un mensaje...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  onSubmitted: (_) => _sendMessage(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: _sendMessage,
-                icon: const Icon(Icons.send),
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ],
-          ),
-        ),
+        _buildMessageInput(),
       ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.medical_services_outlined,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Describe tus síntomas o pregunta sobre especialistas',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        final message = _messages[index];
+        return _buildMessageBubble(message);
+      },
     );
   }
 
@@ -158,6 +154,48 @@ class _ChatbotPageState extends State<ChatbotPage> {
               child: const Icon(Icons.person, color: Colors.purple),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageInput() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                hintText: 'Escribe un mensaje...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              onSubmitted: (_) => _sendMessage(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: _sendMessage,
+            icon: const Icon(Icons.send),
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ],
       ),
     );
