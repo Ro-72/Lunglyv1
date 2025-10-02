@@ -1,7 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'models/treatment.dart';
 
-class TratamientoPage extends StatelessWidget {
+class TratamientoPage extends StatefulWidget {
   const TratamientoPage({super.key});
+
+  @override
+  State<TratamientoPage> createState() => _TratamientoPageState();
+}
+
+class _TratamientoPageState extends State<TratamientoPage> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  List<Treatment> treatments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTreatments();
+  }
+
+  Future<void> _loadTreatments() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final snapshot =
+        await _firestore
+            .collection('treatments')
+            .where('userId', isEqualTo: user.uid)
+            .where('isActive', isEqualTo: true)
+            .get();
+
+    setState(() {
+      treatments =
+          snapshot.docs
+              .map((doc) => Treatment.fromMap(doc.data(), doc.id))
+              .toList();
+    });
+  }
+
+  Future<void> _addTreatment() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    // Show dialog to add treatment
+    showDialog(
+      context: context,
+      builder:
+          (context) => AddTreatmentDialog(
+            onAdd: (name, dosage, frequency) async {
+              final treatment = Treatment(
+                id: '',
+                name: name,
+                dosage: dosage,
+                frequency: frequency,
+                nextDose: DateTime.now().add(const Duration(hours: 24)),
+                userId: user.uid,
+              );
+
+              final doc = await _firestore
+                  .collection('treatments')
+                  .add(treatment.toMap());
+              setState(() {
+                treatments.add(Treatment.fromMap(treatment.toMap(), doc.id));
+              });
+            },
+          ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,22 +119,15 @@ class TratamientoPage extends StatelessWidget {
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          _buildTreatmentCard(
-            context,
-            title: 'Medicamento A',
-            dosage: '2 veces al día',
-            nextDose: 'Próxima dosis: 14:00',
-            progress: 0.6,
-            color: Colors.blue,
-          ),
-          const SizedBox(height: 12),
-          _buildTreatmentCard(
-            context,
-            title: 'Medicamento B',
-            dosage: '1 vez al día',
-            nextDose: 'Próxima dosis: 20:00',
-            progress: 0.8,
-            color: Colors.green,
+          ...treatments.map(
+            (treatment) => _buildTreatmentCard(
+              context,
+              title: treatment.name,
+              dosage: treatment.dosage,
+              nextDose: 'Próxima dosis: ${_formatDateTime(treatment.nextDose)}',
+              progress: treatment.progress,
+              color: Colors.blue,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -86,7 +146,7 @@ class TratamientoPage extends StatelessWidget {
                   label: 'Agregar',
                   color: Colors.blue,
                   onTap: () {
-                    // Add new treatment
+                    _addTreatment();
                   },
                 ),
               ),
@@ -233,6 +293,73 @@ class TratamientoPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+// Add this new dialog widget at the bottom of the file
+class AddTreatmentDialog extends StatefulWidget {
+  final Function(String name, String dosage, String frequency) onAdd;
+
+  const AddTreatmentDialog({super.key, required this.onAdd});
+
+  @override
+  State<AddTreatmentDialog> createState() => _AddTreatmentDialogState();
+}
+
+class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
+  final _nameController = TextEditingController();
+  final _dosageController = TextEditingController();
+  String _frequency = 'Diario';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Agregar Tratamiento'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'Nombre del medicamento',
+            ),
+          ),
+          TextField(
+            controller: _dosageController,
+            decoration: const InputDecoration(labelText: 'Dosis'),
+          ),
+          DropdownButtonFormField<String>(
+            value: _frequency,
+            items:
+                ['Diario', 'Cada 12 horas', 'Cada 8 horas']
+                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                    .toList(),
+            onChanged: (value) => setState(() => _frequency = value!),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () {
+            widget.onAdd(
+              _nameController.text,
+              _dosageController.text,
+              _frequency,
+            );
+            Navigator.pop(context);
+          },
+          child: const Text('Agregar'),
+        ),
+      ],
     );
   }
 }
