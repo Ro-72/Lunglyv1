@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_page.dart';
-import 'models/treatment.dart';
+import '../models/treatment.dart';
 
 class TratamientoPage extends StatelessWidget {
   const TratamientoPage({super.key});
@@ -282,38 +282,49 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    // Show dialog to add treatment
-    showDialog(
-      context: context,
-      builder: (context) => AddTreatmentDialog(
-        onAdd: (name, dosage, frequency) async {
-          try {
-            final treatment = Treatment(
-              id: '',
-              name: name,
-              dosage: dosage,
-              frequency: frequency,
-              nextDose: DateTime.now().add(const Duration(hours: 24)),
-              userId: user.uid,
-            );
+    // Guardar el messenger antes de mostrar el diálogo
+    final messenger = ScaffoldMessenger.of(context);
 
-            await _firestore.collection('treatments').add(treatment.toMap());
-            
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tratamiento agregado exitosamente')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error al agregar tratamiento: $e')),
-              );
-            }
-          }
-        },
-      ),
+    // Show dialog to add treatment
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) => const AddTreatmentDialog(),
     );
+
+    if (result == null) return;
+
+    final name = result['name']?.trim() ?? '';
+    final dosage = result['dosage']?.trim() ?? '';
+    final frequency = result['frequency'] ?? 'Diario';
+
+    // Validar que los campos no estén vacíos
+    if (name.isEmpty || dosage.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Por favor completa todos los campos')),
+      );
+      return;
+    }
+
+    try {
+      final treatment = Treatment(
+        id: '',
+        name: name,
+        dosage: dosage,
+        frequency: frequency,
+        nextDose: DateTime.now().add(const Duration(hours: 24)),
+        userId: user.uid,
+      );
+
+      await _firestore.collection('treatments').add(treatment.toMap());
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Tratamiento agregado exitosamente')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error al agregar tratamiento: $e')),
+      );
+    }
   }
 
   Future<void> _deleteTreatment(String treatmentId) async {
@@ -524,9 +535,7 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
 
 // Add this new dialog widget at the bottom of the file
 class AddTreatmentDialog extends StatefulWidget {
-  final Function(String name, String dosage, String frequency) onAdd;
-
-  const AddTreatmentDialog({super.key, required this.onAdd});
+  const AddTreatmentDialog({super.key});
 
   @override
   State<AddTreatmentDialog> createState() => _AddTreatmentDialogState();
@@ -571,16 +580,22 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
         ),
         TextButton(
           onPressed: () {
-            widget.onAdd(
-              _nameController.text,
-              _dosageController.text,
-              _frequency,
-            );
-            Navigator.pop(context);
+            Navigator.pop(context, {
+              'name': _nameController.text,
+              'dosage': _dosageController.text,
+              'frequency': _frequency,
+            });
           },
           child: const Text('Agregar'),
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dosageController.dispose();
+    super.dispose();
   }
 }

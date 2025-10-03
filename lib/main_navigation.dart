@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'auth_service.dart';
-import 'inicio_page.dart';
-import 'chatbot_page.dart';
-import 'medico_page.dart';
-import 'tratamiento_page.dart';
+import 'services/auth_service.dart';
+import 'pages/inicio_page.dart';
+import 'pages/chatbot_page.dart';
+import 'pages/medico_page.dart';
+import 'pages/tratamiento_page.dart';
 import 'pages/profile_page.dart';
 
 class MainNavigation extends StatefulWidget {

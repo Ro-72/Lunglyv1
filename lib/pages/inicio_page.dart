@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'auth_service.dart';
+import '../services/auth_service.dart';
 
 class InicioPage extends StatelessWidget {
   const InicioPage({super.key});

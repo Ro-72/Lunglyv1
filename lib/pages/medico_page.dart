@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'schedule_appointment_page.dart';
 
 class MedicoPage extends StatelessWidget {
   const MedicoPage({super.key});
@@ -59,7 +60,12 @@ class MedicoPage extends StatelessWidget {
             subtitle: 'Programa una nueva consulta',
             color: Colors.blue,
             onTap: () {
-              // Navigate to schedule appointment
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ScheduleAppointmentPage(),
+                ),
+              );
             },
           ),
           const SizedBox(height: 12),
