@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/doctor.dart';
+import 'appointment_booking_page.dart';
 
 class ScheduleAppointmentPage extends StatefulWidget {
   const ScheduleAppointmentPage({super.key});
@@ -331,11 +332,10 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
   }
 
   void _scheduleAppointment(Doctor doctor) {
-    // TODO: Navegar a página de selección de fecha y hora
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Agendando cita con ${doctor.name}...'),
-        duration: const Duration(seconds: 2),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AppointmentBookingPage(doctor: doctor),
       ),
     );
   }

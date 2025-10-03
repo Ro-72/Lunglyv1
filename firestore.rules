@@ -24,5 +24,33 @@ service cloud.firestore {
       // (puedes ajustar esto según tus necesidades)
       allow write: if false;
     }
+
+    match /appointments/{appointmentId} {
+      // Permitir lectura si es el paciente o el doctor de la cita
+      allow read: if request.auth != null &&
+        (resource.data.patientId == request.auth.uid ||
+         resource.data.doctorId == request.auth.uid);
+
+      // Permitir crear cita si el usuario autenticado es el paciente
+      allow create: if request.auth != null &&
+        request.resource.data.patientId == request.auth.uid;
+
+      // Permitir actualización si es el paciente o el doctor
+      allow update: if request.auth != null &&
+        (resource.data.patientId == request.auth.uid ||
+         resource.data.doctorId == request.auth.uid);
+
+      // Solo el paciente puede cancelar su cita
+      allow delete: if request.auth != null &&
+        resource.data.patientId == request.auth.uid;
+    }
+
+    match /doctor_schedules/{scheduleId} {
+      // Todos pueden leer los horarios de los doctores
+      allow read: if request.auth != null;
+
+      // Solo administradores pueden modificar horarios
+      allow write: if false;
+    }
   }
 }
