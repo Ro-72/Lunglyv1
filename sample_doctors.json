@@ -7,8 +7,7 @@
     "pricePerAppointment": 75.00,
     "profileImageUrl": null,
     "rating": 4.8,
-    "reviewCount": 127,
-    "availableDays": ["Lunes", "Miércoles", "Viernes"]
+    "reviewCount": 127
   },
   {
     "name": "Dra. María Rodríguez",
@@ -18,8 +17,7 @@
     "pricePerAppointment": 80.00,
     "profileImageUrl": null,
     "rating": 4.9,
-    "reviewCount": 156,
-    "availableDays": ["Martes", "Jueves", "Sábado"]
+    "reviewCount": 156
   },
   {
     "name": "Dr. Jorge Fernández",
@@ -29,8 +27,7 @@
     "pricePerAppointment": 90.00,
     "profileImageUrl": null,
     "rating": 4.7,
-    "reviewCount": 98,
-    "availableDays": ["Lunes", "Martes", "Jueves"]
+    "reviewCount": 98
   },
   {
     "name": "Dra. Ana Patricia Gómez",
@@ -40,8 +37,7 @@
     "pricePerAppointment": 85.00,
     "profileImageUrl": null,
     "rating": 4.9,
-    "reviewCount": 142,
-    "availableDays": ["Lunes", "Miércoles", "Viernes"]
+    "reviewCount": 142
   },
   {
     "name": "Dr. Roberto Sánchez",
@@ -51,8 +47,7 @@
     "pricePerAppointment": 50.00,
     "profileImageUrl": null,
     "rating": 4.6,
-    "reviewCount": 215,
-    "availableDays": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
+    "reviewCount": 215
   },
   {
     "name": "Dra. Laura Martínez",
@@ -62,8 +57,7 @@
     "pricePerAppointment": 55.00,
     "profileImageUrl": null,
     "rating": 4.7,
-    "reviewCount": 183,
-    "availableDays": ["Martes", "Jueves", "Sábado"]
+    "reviewCount": 183
   },
   {
     "name": "Dr. Pedro Ramírez",
@@ -73,8 +67,7 @@
     "pricePerAppointment": 60.00,
     "profileImageUrl": null,
     "rating": 4.9,
-    "reviewCount": 267,
-    "availableDays": ["Lunes", "Miércoles", "Viernes"]
+    "reviewCount": 267
   },
   {
     "name": "Dra. Sofía Hernández",
@@ -84,8 +77,7 @@
     "pricePerAppointment": 70.00,
     "profileImageUrl": null,
     "rating": 5.0,
-    "reviewCount": 194,
-    "availableDays": ["Martes", "Jueves", "Sábado"]
+    "reviewCount": 194
   },
   {
     "name": "Dr. Luis Alberto Torres",
@@ -95,8 +87,7 @@
     "pricePerAppointment": 95.00,
     "profileImageUrl": null,
     "rating": 4.8,
-    "reviewCount": 89,
-    "availableDays": ["Miércoles", "Viernes"]
+    "reviewCount": 89
   },
   {
     "name": "Dra. Carmen Ruiz",
@@ -106,7 +97,6 @@
     "pricePerAppointment": 75.00,
     "profileImageUrl": null,
     "rating": 4.8,
-    "reviewCount": 134,
-    "availableDays": ["Lunes", "Martes", "Miércoles", "Jueves"]
+    "reviewCount": 134
   }
 ]

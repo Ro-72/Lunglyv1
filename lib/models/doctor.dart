@@ -8,7 +8,6 @@ class Doctor {
   final String description;
   final double pricePerAppointment;
   final String? profileImageUrl;
-  final List<String> availableDays;
   final double rating;
   final int reviewCount;
 
@@ -20,7 +19,6 @@ class Doctor {
     required this.description,
     required this.pricePerAppointment,
     this.profileImageUrl,
-    this.availableDays = const [],
     this.rating = 0.0,
     this.reviewCount = 0,
   });
@@ -33,7 +31,6 @@ class Doctor {
       'description': description,
       'pricePerAppointment': pricePerAppointment,
       'profileImageUrl': profileImageUrl,
-      'availableDays': availableDays,
       'rating': rating,
       'reviewCount': reviewCount,
     };
@@ -48,7 +45,6 @@ class Doctor {
       description: map['description'] ?? '',
       pricePerAppointment: (map['pricePerAppointment'] ?? 0).toDouble(),
       profileImageUrl: map['profileImageUrl'],
-      availableDays: List<String>.from(map['availableDays'] ?? []),
       rating: (map['rating'] ?? 0.0).toDouble(),
       reviewCount: map['reviewCount'] ?? 0,
     );

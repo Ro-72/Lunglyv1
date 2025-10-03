@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
 import '../models/doctor.dart';
 import 'appointment_booking_page.dart';
 
@@ -99,6 +100,14 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
         children: _specialties.map((specialty) {
           return _buildDoctorList(specialty);
         }).toList(),
+      ),
+      // TEMPORAL: Botón para agregar doctores de prueba
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addTestDoctor,
+        icon: const Icon(Icons.person_add),
+        label: const Text('Doctor de Prueba'),
+        backgroundColor: Colors.orange,
+        tooltip: 'Agregar doctor de prueba (temporal)',
       ),
     );
   }
@@ -338,5 +347,98 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
         builder: (context) => AppointmentBookingPage(doctor: doctor),
       ),
     );
+  }
+
+  // TEMPORAL: Función para agregar doctores de prueba
+  Future<void> _addTestDoctor() async {
+    final random = Random();
+
+    final List<String> nombres = [
+      'Carlos', 'María', 'José', 'Ana', 'Luis', 'Carmen', 'Pedro', 'Laura',
+      'Miguel', 'Isabel', 'Francisco', 'Elena', 'Antonio', 'Sofía', 'Manuel'
+    ];
+
+    final List<String> apellidos = [
+      'García', 'Rodríguez', 'Martínez', 'López', 'González', 'Pérez',
+      'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez'
+    ];
+
+    final List<String> titulos = [
+      'MD, PhD',
+      'MD',
+      'MD, MSc',
+      'DO',
+      'MD, FACP',
+      'MD, FCCP'
+    ];
+
+    final Map<String, List<String>> especialidadesConDescripciones = {
+      'Neumología': [
+        'Especialista en enfermedades respiratorias con amplia experiencia en el tratamiento de asma, EPOC y fibrosis pulmonar.',
+        'Experto en el diagnóstico y tratamiento de patologías pulmonares crónicas y agudas.',
+        'Médico especializado en cuidado respiratorio con enfoque en medicina preventiva.',
+      ],
+      'Cardiología': [
+        'Cardiólogo con especialización en prevención y tratamiento de enfermedades cardiovasculares.',
+        'Experto en arritmias cardíacas e insuficiencia cardíaca con tecnología de vanguardia.',
+        'Especialista en hipertensión arterial y rehabilitación cardíaca.',
+      ],
+      'Medicina General': [
+        'Médico general con enfoque integral en la salud del paciente y medicina preventiva.',
+        'Especialista en atención primaria con amplia experiencia en diagnóstico y tratamiento.',
+        'Médico familiar dedicado al cuidado integral de pacientes de todas las edades.',
+      ],
+      'Pediatría': [
+        'Pediatra especializado en el cuidado integral de niños y adolescentes.',
+        'Experto en desarrollo infantil y enfermedades pediátricas comunes.',
+        'Médico pediatra con enfoque en medicina preventiva y vacunación.',
+      ],
+    };
+
+    final especialidad = especialidadesConDescripciones.keys.elementAt(
+      random.nextInt(especialidadesConDescripciones.length)
+    );
+
+    final nombre = '${nombres[random.nextInt(nombres.length)]} ${apellidos[random.nextInt(apellidos.length)]}';
+    final titulo = titulos[random.nextInt(titulos.length)];
+    final descripcion = especialidadesConDescripciones[especialidad]![
+      random.nextInt(especialidadesConDescripciones[especialidad]!.length)
+    ];
+    final precio = (random.nextInt(31) + 20) * 5.0; // Entre $100 y $250 en múltiplos de 5
+    final rating = (random.nextInt(21) + 30) / 10.0; // Entre 3.0 y 5.0
+    final reviewCount = random.nextInt(100) + 10; // Entre 10 y 110 reseñas
+
+    final doctor = Doctor(
+      id: '',
+      name: 'Dr. $nombre',
+      title: titulo,
+      specialty: especialidad,
+      description: descripcion,
+      pricePerAppointment: precio,
+      rating: rating,
+      reviewCount: reviewCount,
+    );
+
+    try {
+      await _firestore.collection('doctors').add(doctor.toMap());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Doctor de prueba agregado: ${doctor.name}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al agregar doctor: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

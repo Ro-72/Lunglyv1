@@ -46,35 +46,3 @@ class Appointment {
     );
   }
 }
-
-class DoctorSchedule {
-  final String doctorId;
-  final int startHour;
-  final int endHour;
-  final List<String> workDays;
-
-  DoctorSchedule({
-    required this.doctorId,
-    required this.startHour,
-    required this.endHour,
-    required this.workDays,
-  });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'doctorId': doctorId,
-      'startHour': startHour,
-      'endHour': endHour,
-      'workDays': workDays,
-    };
-  }
-
-  factory DoctorSchedule.fromMap(Map<String, dynamic> map) {
-    return DoctorSchedule(
-      doctorId: map['doctorId'] ?? '',
-      startHour: map['startHour'] ?? 8,
-      endHour: map['endHour'] ?? 16,
-      workDays: List<String>.from(map['workDays'] ?? []),
-    );
-  }
-}

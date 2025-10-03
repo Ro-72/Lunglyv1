@@ -31,7 +31,22 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   void initState() {
     super.initState();
     _currentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    _initializeDefaultAvailability();
     _loadAvailability();
+  }
+
+  // Inicializar todos los días como disponibles por defecto
+  void _initializeDefaultAvailability() {
+    final now = DateTime.now();
+    final endDate = DateTime(now.year, now.month + _monthsToShow, now.day);
+
+    for (int i = 0; i < (endDate.difference(now).inDays + 1); i++) {
+      final date = now.add(Duration(days: i));
+      final dateKey = _getDateKey(date);
+
+      // Marcar todos los días futuros como disponibles inicialmente
+      _dateAvailability[dateKey] = true;
+    }
   }
 
   Future<void> _loadAvailability() async {
@@ -51,7 +66,16 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   }
 
   Future<List<String>> _getAvailableSlotsForDate(DateTime date) async {
-    // Obtener el horario del doctor (por defecto 8am - 4pm)
+    // No permitir fechas pasadas
+    final today = DateTime.now();
+    final todayStart = DateTime(today.year, today.month, today.day);
+    final dateToCheck = DateTime(date.year, date.month, date.day);
+
+    if (dateToCheck.isBefore(todayStart)) {
+      return [];
+    }
+
+    // Horario de trabajo del doctor (8am - 4pm = 8 horas)
     final startHour = 8;
     final endHour = 16;
 
@@ -70,7 +94,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     List<String> availableSlots = [];
     Set<int> bookedHours = {};
 
-    // Marcar horas ocupadas
+    // Marcar horas ocupadas según las citas existentes
     for (var doc in appointments.docs) {
       final appointment = Appointment.fromMap(doc.data(), doc.id);
       final hour = int.parse(appointment.startTime.split(':')[0]);
@@ -79,7 +103,8 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
       }
     }
 
-    // Generar slots disponibles
+    // Generar slots disponibles para todas las horas del día
+    // Solo se muestran las horas que no están ocupadas
     for (int hour = startHour; hour < endHour; hour++) {
       if (!bookedHours.contains(hour)) {
         final timeStr = '${hour.toString().padLeft(2, '0')}:00';
@@ -312,17 +337,21 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
             runSpacing: 8,
             children: slots.map((time) {
               final isSelected = _selectedTime == time;
+              // Verificar si hay suficientes horas consecutivas disponibles
+              final hour = int.parse(time.split(':')[0]);
+              final hasEnoughSlots = _hasConsecutiveSlots(slots, hour, _selectedDuration);
+
               return ChoiceChip(
                 label: Text(time),
                 selected: isSelected,
-                onSelected: (selected) {
+                onSelected: hasEnoughSlots ? (selected) {
                   setState(() {
                     _selectedTime = selected ? time : null;
                   });
-                },
+                } : null,
                 selectedColor: Colors.blue,
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isSelected ? Colors.white : hasEnoughSlots ? Colors.black : Colors.grey,
                 ),
               );
             }).toList(),
@@ -331,6 +360,17 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  bool _hasConsecutiveSlots(List<String> slots, int startHour, int duration) {
+    for (int i = 0; i < duration; i++) {
+      final requiredHour = startHour + i;
+      final requiredTime = '${requiredHour.toString().padLeft(2, '0')}:00';
+      if (!slots.contains(requiredTime)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Widget _buildDurationSelector() {
@@ -354,6 +394,15 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                 onSelected: (selected) {
                   setState(() {
                     _selectedDuration = 1;
+                    // Verificar si el horario seleccionado sigue siendo válido
+                    if (_selectedTime != null) {
+                      final dateKey = _getDateKey(_selectedDate!);
+                      final slots = _availableSlots[dateKey] ?? [];
+                      final hour = int.parse(_selectedTime!.split(':')[0]);
+                      if (!_hasConsecutiveSlots(slots, hour, _selectedDuration)) {
+                        _selectedTime = null;
+                      }
+                    }
                   });
                 },
                 selectedColor: Colors.blue,
@@ -368,6 +417,15 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                 onSelected: (selected) {
                   setState(() {
                     _selectedDuration = 2;
+                    // Verificar si el horario seleccionado sigue siendo válido
+                    if (_selectedTime != null) {
+                      final dateKey = _getDateKey(_selectedDate!);
+                      final slots = _availableSlots[dateKey] ?? [];
+                      final hour = int.parse(_selectedTime!.split(':')[0]);
+                      if (!_hasConsecutiveSlots(slots, hour, _selectedDuration)) {
+                        _selectedTime = null;
+                      }
+                    }
                   });
                 },
                 selectedColor: Colors.blue,

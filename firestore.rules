@@ -20,9 +20,9 @@ service cloud.firestore {
       // Todos los usuarios autenticados pueden ver los médicos
       allow read: if request.auth != null;
 
-      // Solo administradores pueden crear, actualizar o eliminar médicos
-      // (puedes ajustar esto según tus necesidades)
-      allow write: if false;
+      // Permitir crear, actualizar o eliminar médicos (para pruebas)
+      // TODO: En producción, restringir solo a administradores
+      allow write: if request.auth != null;
     }
 
     match /appointments/{appointmentId} {
@@ -43,14 +43,6 @@ service cloud.firestore {
       // Solo el paciente puede cancelar su cita
       allow delete: if request.auth != null &&
         resource.data.patientId == request.auth.uid;
-    }
-
-    match /doctor_schedules/{scheduleId} {
-      // Todos pueden leer los horarios de los doctores
-      allow read: if request.auth != null;
-
-      // Solo administradores pueden modificar horarios
-      allow write: if false;
     }
   }
 }
