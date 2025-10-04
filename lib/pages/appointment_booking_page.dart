@@ -17,10 +17,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  DateTime? _selectedDate;
-  String? _selectedTime;
-  int _selectedDuration = 1;
-
   late DateTime _currentMonth;
   final int _monthsToShow = 3;
 
@@ -131,17 +127,9 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
           _buildDoctorInfo(),
           Expanded(
             child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildCalendar(),
-                  if (_selectedDate != null) _buildTimeSlots(),
-                  if (_selectedTime != null) _buildDurationSelector(),
-                ],
-              ),
+              child: _buildCalendar(),
             ),
           ),
-          if (_selectedDate != null && _selectedTime != null)
-            _buildBookButton(),
         ],
       ),
     );
@@ -252,19 +240,12 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                     final isPast = date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
                     final dateKey = _getDateKey(date);
                     final isAvailable = _dateAvailability[dateKey] ?? false;
-                    final isSelected = _selectedDate != null &&
-                        date.year == _selectedDate!.year &&
-                        date.month == _selectedDate!.month &&
-                        date.day == _selectedDate!.day;
 
                     return GestureDetector(
                       onTap: isPast || !isAvailable
                           ? null
                           : () {
-                              setState(() {
-                                _selectedDate = date;
-                                _selectedTime = null;
-                              });
+                              _showTimeSelectionDialog(date);
                             },
                       child: Container(
                         width: 40,
@@ -273,27 +254,17 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                         decoration: BoxDecoration(
                           color: isPast
                               ? Colors.grey[200]
-                              : isSelected
-                                  ? Colors.blue
-                                  : isAvailable
-                                      ? Colors.green[100]
-                                      : Colors.red[100],
+                              : isAvailable
+                                  ? Colors.green[100]
+                                  : Colors.red[100],
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isSelected ? Colors.blue : Colors.transparent,
-                            width: 2,
-                          ),
                         ),
                         child: Center(
                           child: Text(
                             dayNumber.toString(),
                             style: TextStyle(
-                              color: isPast
-                                  ? Colors.grey[400]
-                                  : isSelected
-                                      ? Colors.white
-                                      : Colors.black,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isPast ? Colors.grey[400] : Colors.black,
+                              fontWeight: FontWeight.normal,
                             ),
                           ),
                         ),
@@ -303,58 +274,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                 );
               }),
             ],
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildTimeSlots() {
-    final dateKey = _getDateKey(_selectedDate!);
-    final slots = _availableSlots[dateKey] ?? [];
-
-    if (slots.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text('No hay horarios disponibles para esta fecha'),
-      );
-    }
-
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-            'Selecciona una hora',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: slots.map((time) {
-              final isSelected = _selectedTime == time;
-              // Verificar si hay suficientes horas consecutivas disponibles
-              final hour = int.parse(time.split(':')[0]);
-              final hasEnoughSlots = _hasConsecutiveSlots(slots, hour, _selectedDuration);
-
-              return ChoiceChip(
-                label: Text(time),
-                selected: isSelected,
-                onSelected: hasEnoughSlots ? (selected) {
-                  setState(() {
-                    _selectedTime = selected ? time : null;
-                  });
-                } : null,
-                selectedColor: Colors.blue,
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : hasEnoughSlots ? Colors.black : Colors.grey,
-                ),
-              );
-            }).toList(),
           ),
         ),
         const SizedBox(height: 16),
@@ -373,134 +292,182 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     return true;
   }
 
-  Widget _buildDurationSelector() {
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-            'Duración de la cita',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+  Future<void> _showTimeSelectionDialog(DateTime selectedDate) async {
+    final dateKey = _getDateKey(selectedDate);
+    final slots = await _getAvailableSlotsForDate(selectedDate);
+
+    if (!mounted) return;
+
+    if (slots.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay horarios disponibles para esta fecha'),
+          backgroundColor: Colors.orange,
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ChoiceChip(
-                label: const Text('1 hora'),
-                selected: _selectedDuration == 1,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedDuration = 1;
-                    // Verificar si el horario seleccionado sigue siendo válido
-                    if (_selectedTime != null) {
-                      final dateKey = _getDateKey(_selectedDate!);
-                      final slots = _availableSlots[dateKey] ?? [];
-                      final hour = int.parse(_selectedTime!.split(':')[0]);
-                      if (!_hasConsecutiveSlots(slots, hour, _selectedDuration)) {
-                        _selectedTime = null;
-                      }
-                    }
-                  });
-                },
-                selectedColor: Colors.blue,
-                labelStyle: TextStyle(
-                  color: _selectedDuration == 1 ? Colors.white : Colors.black,
+      );
+      return;
+    }
+
+    String? selectedTime;
+    int selectedDuration = 1;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Agendar Cita - ${_getDateString(selectedDate)}'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Doctor: ${widget.doctor.name}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Selecciona un horario:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: slots.map((time) {
+                        final isSelected = selectedTime == time;
+                        final hour = int.parse(time.split(':')[0]);
+                        final hasEnoughSlots = _hasConsecutiveSlots(slots, hour, selectedDuration);
+
+                        return ChoiceChip(
+                          label: Text(time),
+                          selected: isSelected,
+                          onSelected: hasEnoughSlots
+                              ? (selected) {
+                                  setDialogState(() {
+                                    selectedTime = selected ? time : null;
+                                  });
+                                }
+                              : null,
+                          selectedColor: Colors.blue,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : hasEnoughSlots
+                                    ? Colors.black
+                                    : Colors.grey,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Duración de la cita:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        ChoiceChip(
+                          label: const Text('1 hora'),
+                          selected: selectedDuration == 1,
+                          onSelected: (selected) {
+                            setDialogState(() {
+                              selectedDuration = 1;
+                              if (selectedTime != null) {
+                                final hour = int.parse(selectedTime!.split(':')[0]);
+                                if (!_hasConsecutiveSlots(slots, hour, selectedDuration)) {
+                                  selectedTime = null;
+                                }
+                              }
+                            });
+                          },
+                          selectedColor: Colors.blue,
+                          labelStyle: TextStyle(
+                            color: selectedDuration == 1 ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text('2 horas'),
+                          selected: selectedDuration == 2,
+                          onSelected: (selected) {
+                            setDialogState(() {
+                              selectedDuration = 2;
+                              if (selectedTime != null) {
+                                final hour = int.parse(selectedTime!.split(':')[0]);
+                                if (!_hasConsecutiveSlots(slots, hour, selectedDuration)) {
+                                  selectedTime = null;
+                                }
+                              }
+                            });
+                          },
+                          selectedColor: Colors.blue,
+                          labelStyle: TextStyle(
+                            color: selectedDuration == 2 ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (selectedTime != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total a pagar:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              '\$${(widget.doctor.pricePerAppointment * selectedDuration).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('2 horas'),
-                selected: _selectedDuration == 2,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedDuration = 2;
-                    // Verificar si el horario seleccionado sigue siendo válido
-                    if (_selectedTime != null) {
-                      final dateKey = _getDateKey(_selectedDate!);
-                      final slots = _availableSlots[dateKey] ?? [];
-                      final hour = int.parse(_selectedTime!.split(':')[0]);
-                      if (!_hasConsecutiveSlots(slots, hour, _selectedDuration)) {
-                        _selectedTime = null;
-                      }
-                    }
-                  });
-                },
-                selectedColor: Colors.blue,
-                labelStyle: TextStyle(
-                  color: _selectedDuration == 2 ? Colors.white : Colors.black,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildBookButton() {
-    final totalPrice = widget.doctor.pricePerAppointment * _selectedDuration;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Total a pagar:',
-                  style: TextStyle(fontSize: 16),
-                ),
-                Text(
-                  '\$${totalPrice.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
+                ElevatedButton(
+                  onPressed: selectedTime != null
+                      ? () async {
+                          Navigator.pop(context);
+                          await _bookAppointment(
+                            selectedDate,
+                            selectedTime!,
+                            selectedDuration,
+                          );
+                        }
+                      : null,
+                  child: const Text('Confirmar Cita'),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _bookAppointment,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Confirmar Cita',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
-  Future<void> _bookAppointment() async {
+  Future<void> _bookAppointment(DateTime date, String time, int duration) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
@@ -512,10 +479,10 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
         id: '',
         doctorId: widget.doctor.id,
         patientId: user.uid,
-        date: _selectedDate!,
-        startTime: _selectedTime!,
-        durationHours: _selectedDuration,
-        price: widget.doctor.pricePerAppointment * _selectedDuration,
+        date: date,
+        startTime: time,
+        durationHours: duration,
+        price: widget.doctor.pricePerAppointment * duration,
       );
 
       await _firestore.collection('appointments').add(appointment.toMap());
@@ -527,13 +494,23 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
         ),
       );
 
-      navigator.pop();
+      // Recargar disponibilidad
+      await _loadAvailability();
+
       navigator.pop();
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text('Error al agendar cita: $e')),
       );
     }
+  }
+
+  String _getDateString(DateTime date) {
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return '${date.day} de ${months[date.month - 1]} ${date.year}';
   }
 
   String _getMonthName(DateTime date) {

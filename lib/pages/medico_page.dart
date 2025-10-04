@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'schedule_appointment_page.dart';
+import 'my_appointments_page.dart';
 
 class MedicoPage extends StatelessWidget {
   const MedicoPage({super.key});
@@ -76,7 +77,12 @@ class MedicoPage extends StatelessWidget {
             subtitle: 'Ver citas programadas',
             color: Colors.green,
             onTap: () {
-              // Navigate to appointments list
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyAppointmentsPage(),
+                ),
+              );
             },
           ),
           const SizedBox(height: 12),
