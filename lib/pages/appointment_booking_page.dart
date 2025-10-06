@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/doctor.dart';
 import '../models/appointment.dart';
+import '../models/payment_method.dart';
 
 class AppointmentBookingPage extends StatefulWidget {
   final Doctor doctor;
@@ -450,7 +451,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                   onPressed: selectedTime != null
                       ? () async {
                           Navigator.pop(context);
-                          await _bookAppointment(
+                          await _showPaymentMethodDialog(
                             selectedDate,
                             selectedTime!,
                             selectedDuration,
@@ -467,7 +468,218 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     );
   }
 
-  Future<void> _bookAppointment(DateTime date, String time, int duration) async {
+  Future<void> _showPaymentMethodDialog(DateTime date, String time, int duration) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    // Obtener métodos de pago del usuario
+    final paymentMethodsSnapshot = await _firestore
+        .collection('payment_methods')
+        .where('userId', isEqualTo: user.uid)
+        .get();
+
+    final paymentMethods = paymentMethodsSnapshot.docs
+        .map((doc) => PaymentMethod.fromMap(doc.data(), doc.id))
+        .toList();
+
+    if (!mounted) return;
+
+    PaymentMethod? selectedMethod;
+    if (paymentMethods.isNotEmpty) {
+      // Si hay métodos guardados, usar el predeterminado o el primero
+      selectedMethod = paymentMethods.firstWhere(
+        (method) => method.isDefault,
+        orElse: () => paymentMethods.first,
+      );
+    }
+
+    final result = await showDialog<PaymentType>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Método de Pago'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Selecciona el método de pago para esta cita:',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  if (paymentMethods.isEmpty)
+                    const Text(
+                      'No tienes métodos de pago guardados.\nSelecciona una opción para continuar:',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  const SizedBox(height: 16),
+                  _buildPaymentOption(
+                    context,
+                    icon: Icons.credit_card,
+                    title: 'Tarjeta de Crédito',
+                    type: PaymentType.creditCard,
+                    savedMethod: paymentMethods.any((m) => m.type == PaymentType.creditCard)
+                        ? paymentMethods.firstWhere((m) => m.type == PaymentType.creditCard)
+                        : null,
+                    onTap: () => Navigator.pop(context, PaymentType.creditCard),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPaymentOption(
+                    context,
+                    icon: Icons.paypal,
+                    title: 'PayPal',
+                    type: PaymentType.paypal,
+                    savedMethod: paymentMethods.any((m) => m.type == PaymentType.paypal)
+                        ? paymentMethods.firstWhere((m) => m.type == PaymentType.paypal)
+                        : null,
+                    onTap: () => Navigator.pop(context, PaymentType.paypal),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPaymentOption(
+                    context,
+                    icon: Icons.account_balance,
+                    title: 'Transferencia Bancaria',
+                    type: PaymentType.bankTransfer,
+                    savedMethod: paymentMethods.any((m) => m.type == PaymentType.bankTransfer)
+                        ? paymentMethods.firstWhere((m) => m.type == PaymentType.bankTransfer)
+                        : null,
+                    onTap: () => Navigator.pop(context, PaymentType.bankTransfer),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      await _processPayment(result, date, time, duration);
+    }
+  }
+
+  Widget _buildPaymentOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required PaymentType type,
+    PaymentMethod? savedMethod,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 32, color: Colors.blue[700]),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (savedMethod != null)
+                    Text(
+                      savedMethod.name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _processPayment(PaymentType paymentType, DateTime date, String time, int duration) async {
+    // Mostrar dialog de procesamiento
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // Simular procesamiento de pago
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+    Navigator.pop(context); // Cerrar loading
+
+    // Mostrar confirmación de pago
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
+        title: const Text('¡Pago Validado!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Tu pago ha sido procesado exitosamente.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Método: ${_getPaymentTypeName(paymentType)}',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await _bookAppointment(date, time, duration, paymentType);
+    }
+  }
+
+  String _getPaymentTypeName(PaymentType type) {
+    switch (type) {
+      case PaymentType.creditCard:
+        return 'Tarjeta de Crédito';
+      case PaymentType.paypal:
+        return 'PayPal';
+      case PaymentType.bankTransfer:
+        return 'Transferencia Bancaria';
+    }
+  }
+
+  Future<void> _bookAppointment(DateTime date, String time, int duration, PaymentType paymentType) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
@@ -483,6 +695,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
         startTime: time,
         durationHours: duration,
         price: widget.doctor.pricePerAppointment * duration,
+        paymentMethod: paymentType.toString().split('.').last,
       );
 
       await _firestore.collection('appointments').add(appointment.toMap());

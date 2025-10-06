@@ -5,6 +5,7 @@ import 'pages/chatbot_page.dart';
 import 'pages/medico_page.dart';
 import 'pages/tratamiento_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/payment_methods_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -93,6 +94,17 @@ class _MainNavigationState extends State<MainNavigation> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.payment),
+            title: const Text('Métodos de Pago'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PaymentMethodsPage()),
               );
             },
           ),

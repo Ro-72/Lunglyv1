@@ -9,6 +9,7 @@ class Appointment {
   final int durationHours;
   final String status;
   final double price;
+  final String? paymentMethod;
 
   Appointment({
     required this.id,
@@ -19,6 +20,7 @@ class Appointment {
     required this.durationHours,
     this.status = 'scheduled',
     required this.price,
+    this.paymentMethod,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +32,7 @@ class Appointment {
       'durationHours': durationHours,
       'status': status,
       'price': price,
+      'paymentMethod': paymentMethod,
     };
   }
 
@@ -43,6 +46,7 @@ class Appointment {
       durationHours: map['durationHours'] ?? 1,
       status: map['status'] ?? 'scheduled',
       price: (map['price'] ?? 0).toDouble(),
+      paymentMethod: map['paymentMethod'],
     );
   }
 }

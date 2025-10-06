@@ -53,5 +53,28 @@ service cloud.firestore {
       allow delete: if request.auth != null &&
         resource.data.patientId == request.auth.uid;
     }
+
+    match /payment_methods/{methodId} {
+      // Los usuarios solo pueden leer sus propios métodos de pago
+      allow read: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+
+      // Los usuarios solo pueden crear métodos de pago para sí mismos
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.type is string &&
+        request.resource.data.name is string &&
+        request.resource.data.details is map;
+
+      // Los usuarios solo pueden actualizar sus propios métodos de pago
+      // y no pueden cambiar el userId
+      allow update: if request.auth != null &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Los usuarios solo pueden eliminar sus propios métodos de pago
+      allow delete: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+    }
   }
 }
