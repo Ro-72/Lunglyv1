@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
           background: const Color(0xFFF5F5F5), // Gris muy claro
         ),
         useMaterial3: true,
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
