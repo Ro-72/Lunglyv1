@@ -550,28 +550,32 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Agregar Tratamiento'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Nombre del medicamento',
+      content: SingleChildScrollView(
+        child: ListBody(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nombre del medicamento',
+              ),
             ),
-          ),
-          TextField(
-            controller: _dosageController,
-            decoration: const InputDecoration(labelText: 'Dosis'),
-          ),
-          DropdownButtonFormField<String>(
-            value: _frequency,
-            items:
-                ['Diario', 'Cada 12 horas', 'Cada 8 horas']
-                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                    .toList(),
-            onChanged: (value) => setState(() => _frequency = value!),
-          ),
-        ],
+            const SizedBox(height: 16),
+            TextField(
+              controller: _dosageController,
+              decoration: const InputDecoration(labelText: 'Dosis'),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _frequency,
+              decoration: const InputDecoration(labelText: 'Frecuencia'),
+              items:
+                  ['Diario', 'Cada 12 horas', 'Cada 8 horas']
+                      .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                      .toList(),
+              onChanged: (value) => setState(() => _frequency = value!),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
