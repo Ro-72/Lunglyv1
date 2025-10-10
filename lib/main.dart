@@ -5,9 +5,7 @@ import 'auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -37,9 +35,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          iconTheme: IconThemeData(
-            color: Color(0xFF2C2C2C),
-          ),
+          iconTheme: IconThemeData(color: Color(0xFF2C2C2C)),
         ),
         textTheme: TextTheme(
           headlineMedium: TextTheme.of(context).headlineMedium?.copyWith(
@@ -50,13 +46,12 @@ class MyApp extends StatelessWidget {
             color: const Color(0xFF2C2C2C),
             fontWeight: FontWeight.w500,
           ),
-          bodyLarge: TextTheme.of(context).bodyLarge?.copyWith(
-            color: const Color(0xFF4A4A4A),
-          ),
+          bodyLarge: TextTheme.of(
+            context,
+          ).bodyLarge?.copyWith(color: const Color(0xFF4A4A4A)),
         ),
       ),
       home: const AuthWrapper(),
     );
   }
 }
-
