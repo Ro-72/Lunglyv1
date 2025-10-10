@@ -544,7 +544,16 @@ class AddTreatmentDialog extends StatefulWidget {
 class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
   final _nameController = TextEditingController();
   final _dosageController = TextEditingController();
+  final _nameFocusNode = FocusNode();
   String _frequency = 'Diario';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _nameFocusNode.requestFocus();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -555,6 +564,8 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
           children: [
             TextField(
               controller: _nameController,
+              focusNode: _nameFocusNode,
+              autofocus: true,
               decoration: const InputDecoration(
                 labelText: 'Nombre del medicamento',
               ),
@@ -600,6 +611,7 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
   void dispose() {
     _nameController.dispose();
     _dosageController.dispose();
+    _nameFocusNode.dispose();
     super.dispose();
   }
 }
