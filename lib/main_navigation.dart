@@ -27,35 +27,51 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lungly App'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      drawer: _buildDrawer(context),
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+
+        // Si no estás en la página de inicio, ve a inicio
+        if (_currentIndex != 0) {
           setState(() {
-            _currentIndex = index;
+            _currentIndex = 0;
           });
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble),
-            label: 'Chatbot',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services),
-            label: 'Médico',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.healing), label: 'Trat'),
-        ],
+        } else {
+          // Si ya estás en inicio, sal de la app
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Lungly App'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        drawer: _buildDrawer(context),
+        body: _pages[_currentIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Colors.grey,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble),
+              label: 'Chatbot',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.medical_services),
+              label: 'Médico',
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.healing), label: 'Trat'),
+          ],
+        ),
       ),
     );
   }
@@ -89,23 +105,25 @@ class _MainNavigationState extends State<MainNavigation> {
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Perfil Médico'),
-            onTap: () {
-              Navigator.pop(context); // Close drawer
-              Navigator.push(
+            onTap: () async {
+              // Navegar sin cerrar el drawer
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfilePage()),
               );
+              // El drawer permanece abierto cuando regresas
             },
           ),
           ListTile(
             leading: const Icon(Icons.payment),
             title: const Text('Métodos de Pago'),
-            onTap: () {
-              Navigator.pop(context); // Close drawer
-              Navigator.push(
+            onTap: () async {
+              // Navegar sin cerrar el drawer
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const PaymentMethodsPage()),
               );
+              // El drawer permanece abierto cuando regresas
             },
           ),
           ListTile(
