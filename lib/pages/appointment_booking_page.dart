@@ -50,11 +50,32 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     final now = DateTime.now();
     final endDate = DateTime(now.year, now.month + _monthsToShow, now.day);
 
+    // Obtener TODAS las citas del doctor en una sola consulta
+    final dateStart = DateTime(now.year, now.month, now.day);
+    final dateEnd = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+
+    final allAppointments = await _firestore
+        .collection('appointments')
+        .where('doctorId', isEqualTo: widget.doctor.id)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dateStart))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
+        .get();
+
+    // Agrupar citas por fecha
+    Map<String, List<Appointment>> appointmentsByDate = {};
+    for (var doc in allAppointments.docs) {
+      final appointment = Appointment.fromMap(doc.data(), doc.id);
+      final dateKey = _getDateKey(appointment.date);
+      appointmentsByDate.putIfAbsent(dateKey, () => []).add(appointment);
+    }
+
+    // Calcular slots disponibles para cada día
     for (int i = 0; i < (endDate.difference(now).inDays + 1); i++) {
       final date = now.add(Duration(days: i));
       final dateKey = _getDateKey(date);
+      final dayAppointments = appointmentsByDate[dateKey] ?? [];
 
-      final slots = await _getAvailableSlotsForDate(date);
+      final slots = _calculateAvailableSlotsForDate(date, dayAppointments);
       _availableSlots[dateKey] = slots;
       _dateAvailability[dateKey] = slots.isNotEmpty;
     }
@@ -62,7 +83,13 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     if (mounted) setState(() {});
   }
 
-  Future<List<String>> _getAvailableSlotsForDate(DateTime date) async {
+  Future<bool> _hasAvailableSlots(DateTime date) async {
+    final slots = await _getAvailableSlotsForDate(date);
+    return slots.isNotEmpty;
+  }
+
+  // Calcular slots disponibles sin hacer consulta a Firestore
+  List<String> _calculateAvailableSlotsForDate(DateTime date, List<Appointment> appointments) {
     // No permitir fechas pasadas
     final today = DateTime.now();
     final todayStart = DateTime(today.year, today.month, today.day);
@@ -76,24 +103,12 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     final startHour = 8;
     final endHour = 16;
 
-    // Obtener citas existentes para este día
-    final dateStart = DateTime(date.year, date.month, date.day);
-    final dateEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
-
-    final appointments = await _firestore
-        .collection('appointments')
-        .where('doctorId', isEqualTo: widget.doctor.id)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dateStart))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
-        .get();
-
     // Crear lista de horarios disponibles
     List<String> availableSlots = [];
     Set<int> bookedHours = {};
 
     // Marcar horas ocupadas según las citas existentes
-    for (var doc in appointments.docs) {
-      final appointment = Appointment.fromMap(doc.data(), doc.id);
+    for (var appointment in appointments) {
       final hour = int.parse(appointment.startTime.split(':')[0]);
       for (int i = 0; i < appointment.durationHours; i++) {
         bookedHours.add(hour + i);
@@ -110,6 +125,25 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     }
 
     return availableSlots;
+  }
+
+  Future<List<String>> _getAvailableSlotsForDate(DateTime date) async {
+    // Obtener citas existentes para este día
+    final dateStart = DateTime(date.year, date.month, date.day);
+    final dateEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    final appointments = await _firestore
+        .collection('appointments')
+        .where('doctorId', isEqualTo: widget.doctor.id)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dateStart))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
+        .get();
+
+    final dayAppointments = appointments.docs
+        .map((doc) => Appointment.fromMap(doc.data(), doc.id))
+        .toList();
+
+    return _calculateAvailableSlotsForDate(date, dayAppointments);
   }
 
   String _getDateKey(DateTime date) {
@@ -240,7 +274,8 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                     final date = DateTime(month.year, month.month, dayNumber);
                     final isPast = date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
                     final dateKey = _getDateKey(date);
-                    final isAvailable = _dateAvailability[dateKey] ?? false;
+                    final availableSlots = _availableSlots[dateKey] ?? [];
+                    final isAvailable = availableSlots.isNotEmpty;
 
                     return GestureDetector(
                       onTap: isPast || !isAvailable
