@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'schedule_appointment_page.dart';
 import 'my_appointments_page.dart';
+import 'medical_history_page.dart';
+import 'prescriptions_page.dart';
+import 'emergency_contact_page.dart';
 
 class MedicoPage extends StatelessWidget {
   const MedicoPage({super.key});
@@ -93,7 +96,12 @@ class MedicoPage extends StatelessWidget {
             subtitle: 'Consulta tu historial',
             color: Colors.orange,
             onTap: () {
-              // Navigate to medical history
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MedicalHistoryPage(),
+                ),
+              );
             },
           ),
           const SizedBox(height: 12),
@@ -104,7 +112,12 @@ class MedicoPage extends StatelessWidget {
             subtitle: 'Ver recetas médicas',
             color: Colors.purple,
             onTap: () {
-              // Navigate to prescriptions
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PrescriptionsPage(),
+                ),
+              );
             },
           ),
           const SizedBox(height: 12),
@@ -115,7 +128,12 @@ class MedicoPage extends StatelessWidget {
             subtitle: 'Contacto de emergencia',
             color: Colors.red,
             onTap: () {
-              // Navigate to emergency contact
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EmergencyContactPage(),
+                ),
+              );
             },
           ),
         ],
