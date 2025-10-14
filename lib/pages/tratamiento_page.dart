@@ -297,6 +297,9 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     final name = result['name']?.trim() ?? '';
     final description = result['description']?.trim() ?? '';
     final medications = result['medications'] as List<Medication>? ?? [];
+    final useSharedSettings = result['useSharedSettings'] as bool? ?? false;
+    final sharedFrequency = result['sharedFrequency'] as String?;
+    final sharedDurationDays = result['sharedDurationDays'] as int?;
 
     // Validar que los campos no estén vacíos
     if (name.isEmpty || medications.isEmpty) {
@@ -313,6 +316,9 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
         description: description,
         medications: medications,
         userId: user.uid,
+        useSharedSettings: useSharedSettings,
+        sharedFrequency: sharedFrequency,
+        sharedDurationDays: sharedDurationDays,
       );
 
       await _firestore.collection('treatments').add(treatment.toMap());
@@ -390,69 +396,198 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     BuildContext context,
     Treatment treatment,
   ) {
+    return TreatmentCardExpansion(
+      treatment: treatment,
+      onDelete: () => _deleteTreatment(treatment.id),
+      onCompleteDose: (medication) => _completeDose(treatment, medication),
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TreatmentCardExpansion extends StatefulWidget {
+  final Treatment treatment;
+  final VoidCallback onDelete;
+  final Function(Medication) onCompleteDose;
+
+  const TreatmentCardExpansion({
+    super.key,
+    required this.treatment,
+    required this.onDelete,
+    required this.onCompleteDose,
+  });
+
+  @override
+  State<TreatmentCardExpansion> createState() => _TreatmentCardExpansionState();
+}
+
+class _TreatmentCardExpansionState extends State<TreatmentCardExpansion> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Encabezado del tratamiento
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.healing, color: Colors.blue),
                   ),
-                  child: const Icon(Icons.healing, color: Colors.blue),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        treatment.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (treatment.description.isNotEmpty)
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          treatment.description,
-                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                          widget.treatment.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                    ],
+                        if (widget.treatment.description.isNotEmpty && !_isExpanded)
+                          Text(
+                            widget.treatment.description,
+                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${widget.treatment.medications.length} medicamento${widget.treatment.medications.length != 1 ? "s" : ""}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  color: Colors.red,
-                  onPressed: () => _deleteTreatment(treatment.id),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 8),
-            // Lista de medicamentos
-            Text(
-              'Medicamentos (${treatment.medications.length})',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                  Icon(
+                    _isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.grey[600],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            ...treatment.medications.map((medication) =>
-                _buildMedicationItem(context, treatment, medication)),
+          ),
+          if (_isExpanded) ...[
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.treatment.description.isNotEmpty) ...[
+                    Text(
+                      widget.treatment.description,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (widget.treatment.useSharedSettings) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.sync, size: 16, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Configuración compartida: ${widget.treatment.sharedFrequency} - ${widget.treatment.sharedDurationDays} días',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Medicamentos (${widget.treatment.medications.length})',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20),
+                        color: Colors.red,
+                        onPressed: widget.onDelete,
+                        tooltip: 'Eliminar tratamiento',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...widget.treatment.medications.map((medication) =>
+                      _buildMedicationItem(context, widget.treatment, medication)),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -462,20 +597,29 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     Treatment treatment,
     Medication medication,
   ) {
+    final bool isExpired = medication.isExpired;
+    final int daysRemaining = medication.daysRemaining;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: isExpired ? Colors.red.shade50 : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isExpired ? Colors.red.shade200 : Colors.grey.shade200,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.medication, color: Colors.blue, size: 20),
+              Icon(
+                Icons.medication,
+                color: isExpired ? Colors.red : Colors.blue,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -483,9 +627,10 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                   children: [
                     Text(
                       medication.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
+                        decoration: isExpired ? TextDecoration.lineThrough : null,
                       ),
                     ),
                     Text(
@@ -495,14 +640,35 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                         fontSize: 13,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 12,
+                          color: isExpired ? Colors.red : Colors.green,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isExpired
+                              ? 'Tratamiento finalizado'
+                              : '$daysRemaining ${daysRemaining == 1 ? "día restante" : "días restantes"}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isExpired ? Colors.red : Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              _buildDoseButton(treatment, medication),
+              if (!isExpired) _buildDoseButton(treatment, medication),
             ],
           ),
           const SizedBox(height: 8),
-          _buildMedicationTimer(medication),
+          if (!isExpired) _buildMedicationTimer(medication),
         ],
       ),
     );
@@ -515,7 +681,7 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     return IconButton(
       icon: const Icon(Icons.check_circle),
       color: isDoseAvailable ? Colors.green : Colors.grey,
-      onPressed: isDoseAvailable ? () => _completeDose(treatment, medication) : null,
+      onPressed: isDoseAvailable ? () => widget.onCompleteDose(medication) : null,
       tooltip: isDoseAvailable ? 'Registrar dosis' : 'Dosis no disponible aún',
     );
   }
@@ -629,7 +795,12 @@ class AddTreatmentDialog extends StatefulWidget {
 class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
   final _treatmentNameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _durationController = TextEditingController(text: '30');
   final List<Medication> _medications = [];
+
+  bool _useSharedSettings = false;
+  String _sharedFrequency = 'Diario';
+  int _sharedDurationDays = 30;
 
   @override
   Widget build(BuildContext context) {
@@ -657,6 +828,89 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
                   hintText: 'Detalles del tratamiento',
                 ),
                 maxLines: 2,
+              ),
+              const SizedBox(height: 24),
+              // Switch para configuración compartida
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Configuración compartida',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Misma frecuencia y duración para todos',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _useSharedSettings,
+                          onChanged: (value) {
+                            setState(() {
+                              _useSharedSettings = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    if (_useSharedSettings) ...[
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _sharedFrequency,
+                        decoration: const InputDecoration(
+                          labelText: 'Frecuencia',
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: ['Diario', 'Cada 12 horas', 'Cada 8 horas', 'Cada 6 horas']
+                            .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                            .toList(),
+                        onChanged: (value) => setState(() => _sharedFrequency = value!),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _durationController,
+                        decoration: const InputDecoration(
+                          labelText: 'Duración (días)',
+                          hintText: 'Ej: 30',
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          final duration = int.tryParse(value);
+                          if (duration != null) {
+                            setState(() {
+                              _sharedDurationDays = duration;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               Row(
@@ -702,7 +956,9 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
                     child: ListTile(
                       leading: const Icon(Icons.medication, color: Colors.blue),
                       title: Text(med.name),
-                      subtitle: Text('${med.dosage} - ${med.frequency}'),
+                      subtitle: Text(_useSharedSettings
+                          ? '${med.dosage} - ${_sharedFrequency} - ${_sharedDurationDays} días'
+                          : '${med.dosage} - ${med.frequency} - ${med.durationDays} días'),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _removeMedication(index),
@@ -721,10 +977,25 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
         ),
         ElevatedButton(
           onPressed: () {
+            // Aplicar configuración compartida si está activada
+            List<Medication> finalMedications = _medications;
+            if (_useSharedSettings && _medications.isNotEmpty) {
+              finalMedications = _medications.map((med) {
+                return med.copyWith(
+                  frequency: _sharedFrequency,
+                  durationDays: _sharedDurationDays,
+                  nextDose: DateTime.now().add(_getFrequencyDuration(_sharedFrequency)),
+                );
+              }).toList();
+            }
+
             Navigator.pop(context, {
               'name': _treatmentNameController.text,
               'description': _descriptionController.text,
-              'medications': _medications,
+              'medications': finalMedications,
+              'useSharedSettings': _useSharedSettings,
+              'sharedFrequency': _useSharedSettings ? _sharedFrequency : null,
+              'sharedDurationDays': _useSharedSettings ? _sharedDurationDays : null,
             });
           },
           child: const Text('Guardar'),
@@ -733,10 +1004,28 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
     );
   }
 
+  Duration _getFrequencyDuration(String frequency) {
+    switch (frequency) {
+      case 'Cada 6 horas':
+        return const Duration(hours: 6);
+      case 'Cada 8 horas':
+        return const Duration(hours: 8);
+      case 'Cada 12 horas':
+        return const Duration(hours: 12);
+      case 'Diario':
+      default:
+        return const Duration(hours: 24);
+    }
+  }
+
   Future<void> _addMedication() async {
     final result = await showDialog<Medication>(
       context: context,
-      builder: (context) => const AddMedicationDialog(),
+      builder: (context) => AddMedicationDialog(
+        showFrequencyField: !_useSharedSettings,
+        defaultFrequency: _sharedFrequency,
+        defaultDuration: _sharedDurationDays,
+      ),
     );
 
     if (result != null) {
@@ -756,13 +1045,23 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
   void dispose() {
     _treatmentNameController.dispose();
     _descriptionController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 }
 
 // Dialog para agregar un medicamento individual
 class AddMedicationDialog extends StatefulWidget {
-  const AddMedicationDialog({super.key});
+  final bool showFrequencyField;
+  final String defaultFrequency;
+  final int defaultDuration;
+
+  const AddMedicationDialog({
+    super.key,
+    this.showFrequencyField = true,
+    this.defaultFrequency = 'Diario',
+    this.defaultDuration = 30,
+  });
 
   @override
   State<AddMedicationDialog> createState() => _AddMedicationDialogState();
@@ -771,7 +1070,17 @@ class AddMedicationDialog extends StatefulWidget {
 class _AddMedicationDialogState extends State<AddMedicationDialog> {
   final _nameController = TextEditingController();
   final _dosageController = TextEditingController();
-  String _frequency = 'Diario';
+  final _durationController = TextEditingController();
+  late String _frequency;
+  late int _durationDays;
+
+  @override
+  void initState() {
+    super.initState();
+    _frequency = widget.defaultFrequency;
+    _durationDays = widget.defaultDuration;
+    _durationController.text = _durationDays.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -798,14 +1107,59 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _frequency,
-              decoration: const InputDecoration(labelText: 'Frecuencia'),
-              items: ['Diario', 'Cada 12 horas', 'Cada 8 horas', 'Cada 6 horas']
-                  .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                  .toList(),
-              onChanged: (value) => setState(() => _frequency = value!),
-            ),
+            if (widget.showFrequencyField) ...[
+              DropdownButtonFormField<String>(
+                value: _frequency,
+                decoration: const InputDecoration(labelText: 'Frecuencia'),
+                items: ['Diario', 'Cada 12 horas', 'Cada 8 horas', 'Cada 6 horas']
+                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                    .toList(),
+                onChanged: (value) => setState(() => _frequency = value!),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _durationController,
+                decoration: const InputDecoration(
+                  labelText: 'Duración (días)',
+                  hintText: 'Ej: 30',
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  final duration = int.tryParse(value);
+                  if (duration != null) {
+                    _durationDays = duration;
+                  }
+                },
+              ),
+            ] else
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Configuración compartida activa',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Frecuencia: ${widget.defaultFrequency}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    Text(
+                      'Duración: ${widget.defaultDuration} días',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -829,6 +1183,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
               name: _nameController.text.trim(),
               dosage: _dosageController.text.trim(),
               frequency: _frequency,
+              durationDays: _durationDays,
               nextDose: DateTime.now().add(_getFrequencyDuration(_frequency)),
             );
 
@@ -858,6 +1213,7 @@ class _AddMedicationDialogState extends State<AddMedicationDialog> {
   void dispose() {
     _nameController.dispose();
     _dosageController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 }

@@ -11,6 +11,11 @@ class Treatment {
   final double progress;
   final DateTime createdAt;
 
+  // Configuración compartida para todos los medicamentos
+  final bool useSharedSettings; // Si todos comparten frecuencia y duración
+  final String? sharedFrequency; // Frecuencia compartida (si useSharedSettings = true)
+  final int? sharedDurationDays; // Duración compartida en días (si useSharedSettings = true)
+
   Treatment({
     required this.id,
     required this.name,
@@ -20,6 +25,9 @@ class Treatment {
     required this.userId,
     this.progress = 0.0,
     DateTime? createdAt,
+    this.useSharedSettings = false,
+    this.sharedFrequency,
+    this.sharedDurationDays,
   }) : createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -31,6 +39,9 @@ class Treatment {
       'userId': userId,
       'progress': progress,
       'createdAt': createdAt,
+      'useSharedSettings': useSharedSettings,
+      'sharedFrequency': sharedFrequency,
+      'sharedDurationDays': sharedDurationDays,
     };
   }
 
@@ -49,6 +60,9 @@ class Treatment {
       createdAt: map['createdAt'] != null
           ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
+      useSharedSettings: map['useSharedSettings'] ?? false,
+      sharedFrequency: map['sharedFrequency'],
+      sharedDurationDays: map['sharedDurationDays'],
     );
   }
 
@@ -58,6 +72,9 @@ class Treatment {
     List<Medication>? medications,
     bool? isActive,
     double? progress,
+    bool? useSharedSettings,
+    String? sharedFrequency,
+    int? sharedDurationDays,
   }) {
     return Treatment(
       id: id,
@@ -68,6 +85,9 @@ class Treatment {
       userId: userId,
       progress: progress ?? this.progress,
       createdAt: createdAt,
+      useSharedSettings: useSharedSettings ?? this.useSharedSettings,
+      sharedFrequency: sharedFrequency ?? this.sharedFrequency,
+      sharedDurationDays: sharedDurationDays ?? this.sharedDurationDays,
     );
   }
 }
