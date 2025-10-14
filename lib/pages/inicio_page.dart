@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'schedule_appointment_page.dart';
+import 'my_appointments_page.dart';
+import 'medical_history_page.dart';
+import 'prescriptions_page.dart';
+import 'emergency_contact_page.dart';
 
 class InicioPage extends StatelessWidget {
   const InicioPage({super.key});
@@ -67,105 +72,120 @@ class InicioPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              'Tu Centro de Bienestar',
-              style: Theme.of(context).textTheme.titleLarge,
+              'Opciones Médicas',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            children: [
-              _buildWellnessCard(
+          _buildOptionCard(
+            context,
+            icon: Icons.calendar_today,
+            title: 'Agendar Cita',
+            subtitle: 'Programa una nueva consulta',
+            color: Colors.blue,
+            onTap: () {
+              Navigator.push(
                 context,
-                icon: Icons.monitor_heart,
-                title: 'Estado de Salud',
-                description: 'Monitorea tu progreso',
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              _buildWellnessCard(
+                MaterialPageRoute(
+                  builder: (context) => const ScheduleAppointmentPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildOptionCard(
+            context,
+            icon: Icons.list_alt,
+            title: 'Mis Citas',
+            subtitle: 'Ver citas programadas',
+            color: Colors.green,
+            onTap: () {
+              Navigator.push(
                 context,
-                icon: Icons.spa,
-                title: 'Ejercicios',
-                description: 'Respiración y relajación',
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-              _buildWellnessCard(
+                MaterialPageRoute(
+                  builder: (context) => const MyAppointmentsPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildOptionCard(
+            context,
+            icon: Icons.history,
+            title: 'Historial Médico',
+            subtitle: 'Consulta tu historial',
+            color: Colors.orange,
+            onTap: () {
+              Navigator.push(
                 context,
-                icon: Icons.notifications_active,
-                title: 'Recordatorios',
-                description: 'Mantente al día',
-                color: Theme.of(context).colorScheme.tertiary,
-              ),
-              _buildWellnessCard(
+                MaterialPageRoute(
+                  builder: (context) => const MedicalHistoryPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildOptionCard(
+            context,
+            icon: Icons.description,
+            title: 'Recetas',
+            subtitle: 'Ver recetas médicas',
+            color: Colors.purple,
+            onTap: () {
+              Navigator.push(
                 context,
-                icon: Icons.help_outline,
-                title: 'Asistencia',
-                description: 'Estamos para ayudarte',
-                color: Colors.purple[300]!,
-              ),
-            ],
+                MaterialPageRoute(
+                  builder: (context) => const PrescriptionsPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildOptionCard(
+            context,
+            icon: Icons.emergency,
+            title: 'Emergencia',
+            subtitle: 'Contacto de emergencia',
+            color: Colors.red,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EmergencyContactPage(),
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildWellnessCard(
+  Widget _buildOptionCard(
     BuildContext context, {
     required IconData icon,
     required String title,
-    required String description,
+    required String subtitle,
     required Color color,
+    required VoidCallback onTap,
   }) {
     return Card(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color.withOpacity(0.1),
-              Colors.white,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      elevation: 2,
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-          borderRadius: BorderRadius.circular(16),
+          child: Icon(icon, color: color, size: 32),
         ),
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 40, color: color),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: color,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
       ),
     );
   }
