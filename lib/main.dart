@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget {
       title: 'Lungly App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF64B5F6), // Azul suave
-          primary: const Color(0xFF64B5F6),
+          seedColor: const Color(0xFF4990E2), // Azul suave
+          primary: const Color(0xFF4990E2),
           secondary: const Color(0xFF81C784), // Verde suave
           tertiary: const Color(0xFFFFB74D), // Naranja suave
           background: const Color(0xFFF5F5F5), // Gris muy claro
@@ -32,10 +32,15 @@ class MyApp extends StatelessWidget {
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
+          backgroundColor: Color(0xFF4990E2),
           elevation: 0,
           centerTitle: true,
-          iconTheme: IconThemeData(color: Color(0xFF2C2C2C)),
+          iconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         textTheme: TextTheme(
           headlineMedium: TextTheme.of(context).headlineMedium?.copyWith(

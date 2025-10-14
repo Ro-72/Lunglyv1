@@ -44,8 +44,9 @@ class _MainNavigationState extends State<MainNavigation> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Lungly App'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('Lungly App', style: TextStyle(color: Colors.white)),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         drawer: _buildDrawer(context),
         body: _pages[_currentIndex],
