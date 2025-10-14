@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'services/auth_service.dart';
 import 'pages/inicio_page.dart';
 import 'pages/chatbot_page.dart';
@@ -44,7 +45,25 @@ class _MainNavigationState extends State<MainNavigation> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Lungly App', style: TextStyle(color: Colors.white)),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: const [
+              Text(
+                'Lungly',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+              ),
+              SizedBox(width: 8),
+              FaIcon(
+                FontAwesomeIcons.lungs,
+                color: Colors.white,
+                size: 24,
+              ),
+            ],
+          ),
           backgroundColor: Theme.of(context).colorScheme.primary,
           iconTheme: const IconThemeData(color: Colors.white),
         ),

@@ -34,7 +34,7 @@ class TratamientoAuthRequired extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+/*       appBar: AppBar(
         title: const Row(
           children: [
             Icon(Icons.healing, color: Color(0xFFD4AF37)),
@@ -43,7 +43,7 @@ class TratamientoAuthRequired extends StatelessWidget {
           ],
         ),
         automaticallyImplyLeading: false,
-      ),
+      ), */
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -117,7 +117,7 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+/*       appBar: AppBar(
         title: const Row(
           children: [
             Icon(Icons.healing, color: Color(0xFFD4AF37)),
@@ -134,7 +134,7 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
             tooltip: 'Cerrar Sesión',
           ),
         ],
-      ),
+      ), */
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection('treatments')
