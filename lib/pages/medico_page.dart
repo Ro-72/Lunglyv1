@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/doctor.dart';
+import 'appointment_booking_page.dart';
+import 'doctor_detail_page.dart';
 
 class MedicoPage extends StatefulWidget {
   const MedicoPage({super.key});
@@ -408,7 +410,7 @@ class _MedicoPageState extends State<MedicoPage> {
             const SizedBox(height: 16),
             // Price
             Text(
-              'S/${doctor.pricePerAppointment.toStringAsFixed(0)}${doctor.followUpFee != null ? "/S/${doctor.followUpFee}" : ""}',
+              'S/${doctor.pricePerAppointment.toStringAsFixed(0)}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -416,12 +418,17 @@ class _MedicoPageState extends State<MedicoPage> {
               ),
             ),
             const SizedBox(height: 12),
-            // Online Consult Button
+            // Agendar Cita Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Handle online consultation
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AppointmentBookingPage(doctor: doctor),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
@@ -431,33 +438,45 @@ class _MedicoPageState extends State<MedicoPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Consulta Online',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Consulta en ${doctor.consultationMinutes} mins',
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ),
+                    const Icon(Icons.calendar_today, size: 18),
+                    const SizedBox(width: 8),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Agendar Cita',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Consulta de ${doctor.consultationMinutes} mins',
+                          style: const TextStyle(
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 8),
-            // Responder Button (optional)
+            // Detalles Button
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: () {
-                  // Handle response
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DoctorDetailPage(doctor: doctor),
+                    ),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.teal,

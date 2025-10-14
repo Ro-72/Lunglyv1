@@ -41,7 +41,7 @@ class InicioPage extends StatelessWidget {
                       Icon(
                         Icons.favorite,
                         color: Theme.of(context).colorScheme.primary,
-                        size: 32,
+                        size: 24,
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -68,7 +68,7 @@ class InicioPage extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(

@@ -441,7 +441,6 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
 
     // Precios en soles peruanos (S/)
     final precio = (random.nextInt(16) + 10) * 10.0; // Entre S/100 y S/250
-    final followUpFee = (precio * 0.6).round(); // 60% del precio de consulta
 
     final rating = (random.nextInt(21) + 30) / 10.0; // Entre 3.0 y 5.0
     final reviewCount = random.nextInt(100) + 10; // Entre 10 y 110 reseñas
@@ -456,7 +455,6 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
     final qualifications = qualificationsBySpecialty[random.nextInt(qualificationsBySpecialty.length)];
 
     // Idiomas comunes en Perú
-    final List<String> idiomasDisponibles = ['Español', 'Inglés', 'Quechua'];
     final idiomas = <String>['Español']; // Siempre español
     if (random.nextBool()) idiomas.add('Inglés');
     if (random.nextInt(10) < 2) idiomas.add('Quechua'); // 20% habla quechua
@@ -477,7 +475,6 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
       city: ciudad,
       hospital: hospital,
       patientCount: patientCount,
-      followUpFee: followUpFee,
       consultationMinutes: consultationMinutes,
       isApolloDoctor: isApolloDoctor,
     );
