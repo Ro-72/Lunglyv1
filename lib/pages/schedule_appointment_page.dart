@@ -349,39 +349,73 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
     );
   }
 
-  // TEMPORAL: Función para agregar doctores de prueba
+  // TEMPORAL: Función para agregar doctores de prueba con datos peruanos
   Future<void> _addTestDoctor() async {
     final random = Random();
 
+    // Nombres peruanos comunes
     final List<String> nombres = [
-      'Carlos', 'María', 'José', 'Ana', 'Luis', 'Carmen', 'Pedro', 'Laura',
-      'Miguel', 'Isabel', 'Francisco', 'Elena', 'Antonio', 'Sofía', 'Manuel'
+      'Carlos', 'María', 'José', 'Ana', 'Luis', 'Carmen', 'Pedro', 'Rosa',
+      'Miguel', 'Isabel', 'Francisco', 'Elena', 'Antonio', 'Sofía', 'Manuel',
+      'Patricia', 'Jorge', 'Lucía', 'Ricardo', 'Claudia'
     ];
 
+    // Apellidos peruanos comunes
     final List<String> apellidos = [
       'García', 'Rodríguez', 'Martínez', 'López', 'González', 'Pérez',
-      'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez'
+      'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Vargas', 'Castillo',
+      'Romero', 'Herrera', 'Medina', 'Gutiérrez', 'Rojas', 'Díaz'
     ];
 
+    // Títulos médicos
     final List<String> titulos = [
       'MD, PhD',
-      'MD',
       'MD, MSc',
-      'DO',
+      'MD',
       'MD, FACP',
-      'MD, FCCP'
+      'MD, FCCP',
+      'MD, DNB'
+    ];
+
+    // Ciudades peruanas principales
+    final List<String> ciudades = [
+      'Lima', 'Arequipa', 'Trujillo', 'Chiclayo', 'Cusco',
+      'Piura', 'Iquitos', 'Huancayo', 'Tacna', 'Pucallpa'
+    ];
+
+    // Hospitales peruanos reconocidos
+    final List<String> hospitales = [
+      'Hospital Rebagliati',
+      'Hospital Almenara',
+      'Hospital Dos de Mayo',
+      'Clínica Ricardo Palma',
+      'Clínica San Felipe',
+      'Hospital Loayza',
+      'Clínica Anglo Americana',
+      'Hospital Cayetano Heredia',
+      'Clínica Internacional',
+      'Hospital María Auxiliadora'
+    ];
+
+    // Calificaciones médicas
+    final List<List<String>> qualificationsBySpecialty = [
+      ['Médico Cirujano', 'Neumología', 'FCCP'],
+      ['Médico Cirujano', 'Especialista en Neumología', 'Magíster en Medicina'],
+      ['Médico Cirujano', 'Neumología Pediátrica', 'DNB'],
+      ['Médico Cirujano', 'Cardiología', 'FACP'],
+      ['Médico Cirujano', 'Medicina Interna'],
     ];
 
     final Map<String, List<String>> especialidadesConDescripciones = {
       'Neumología': [
         'Especialista en enfermedades respiratorias con amplia experiencia en el tratamiento de asma, EPOC y fibrosis pulmonar.',
         'Experto en el diagnóstico y tratamiento de patologías pulmonares crónicas y agudas.',
-        'Médico especializado en cuidado respiratorio con enfoque en medicina preventiva.',
+        'Médico especializado en cuidado respiratorio con enfoque en medicina preventiva y rehabilitación pulmonar.',
       ],
       'Cardiología': [
         'Cardiólogo con especialización en prevención y tratamiento de enfermedades cardiovasculares.',
         'Experto en arritmias cardíacas e insuficiencia cardíaca con tecnología de vanguardia.',
-        'Especialista en hipertensión arterial y rehabilitación cardíaca.',
+        'Especialista en hipertensión arterial y rehabilitación cardíaca con enfoque integral.',
       ],
       'Medicina General': [
         'Médico general con enfoque integral en la salud del paciente y medicina preventiva.',
@@ -391,7 +425,7 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
       'Pediatría': [
         'Pediatra especializado en el cuidado integral de niños y adolescentes.',
         'Experto en desarrollo infantil y enfermedades pediátricas comunes.',
-        'Médico pediatra con enfoque en medicina preventiva y vacunación.',
+        'Médico pediatra con enfoque en medicina preventiva y vacunación infantil.',
       ],
     };
 
@@ -404,9 +438,28 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
     final descripcion = especialidadesConDescripciones[especialidad]![
       random.nextInt(especialidadesConDescripciones[especialidad]!.length)
     ];
-    final precio = (random.nextInt(31) + 20) * 5.0; // Entre $100 y $250 en múltiplos de 5
+
+    // Precios en soles peruanos (S/)
+    final precio = (random.nextInt(16) + 10) * 10.0; // Entre S/100 y S/250
+    final followUpFee = (precio * 0.6).round(); // 60% del precio de consulta
+
     final rating = (random.nextInt(21) + 30) / 10.0; // Entre 3.0 y 5.0
     final reviewCount = random.nextInt(100) + 10; // Entre 10 y 110 reseñas
+    final yearsExperience = random.nextInt(16) + 5; // Entre 5 y 20 años
+    final patientCount = random.nextInt(3000) + 500; // Entre 500 y 3500 pacientes
+    final consultationMinutes = [15, 20, 25, 30][random.nextInt(4)];
+    final distanceKm = random.nextDouble() * 50 + 5; // Entre 5 y 55 km
+    final isApolloDoctor = random.nextBool();
+
+    final ciudad = ciudades[random.nextInt(ciudades.length)];
+    final hospital = hospitales[random.nextInt(hospitales.length)];
+    final qualifications = qualificationsBySpecialty[random.nextInt(qualificationsBySpecialty.length)];
+
+    // Idiomas comunes en Perú
+    final List<String> idiomasDisponibles = ['Español', 'Inglés', 'Quechua'];
+    final idiomas = <String>['Español']; // Siempre español
+    if (random.nextBool()) idiomas.add('Inglés');
+    if (random.nextInt(10) < 2) idiomas.add('Quechua'); // 20% habla quechua
 
     final doctor = Doctor(
       id: '',
@@ -417,6 +470,16 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
       pricePerAppointment: precio,
       rating: rating,
       reviewCount: reviewCount,
+      yearsExperience: yearsExperience,
+      qualifications: qualifications,
+      languages: idiomas,
+      distanceKm: distanceKm,
+      city: ciudad,
+      hospital: hospital,
+      patientCount: patientCount,
+      followUpFee: followUpFee,
+      consultationMinutes: consultationMinutes,
+      isApolloDoctor: isApolloDoctor,
     );
 
     try {
@@ -424,7 +487,7 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Doctor de prueba agregado: ${doctor.name}'),
+            content: Text('Doctor de prueba agregado: ${doctor.name} - ${doctor.hospital}, ${doctor.city}'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
