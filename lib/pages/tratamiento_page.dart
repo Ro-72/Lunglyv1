@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_page.dart';
 import '../models/treatment.dart';
+import '../models/medication.dart';
 
 class TratamientoPage extends StatelessWidget {
   const TratamientoPage({super.key});
@@ -285,8 +286,8 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     // Guardar el messenger antes de mostrar el diálogo
     final messenger = ScaffoldMessenger.of(context);
 
-    // Show dialog to add treatment
-    final result = await showDialog<Map<String, String>>(
+    // Show dialog to add treatment with multiple medications
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => const AddTreatmentDialog(),
     );
@@ -294,13 +295,13 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     if (result == null) return;
 
     final name = result['name']?.trim() ?? '';
-    final dosage = result['dosage']?.trim() ?? '';
-    final frequency = result['frequency'] ?? 'Diario';
+    final description = result['description']?.trim() ?? '';
+    final medications = result['medications'] as List<Medication>? ?? [];
 
     // Validar que los campos no estén vacíos
-    if (name.isEmpty || dosage.isEmpty) {
+    if (name.isEmpty || medications.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Por favor completa todos los campos')),
+        const SnackBar(content: Text('Por favor completa el nombre y agrega al menos un medicamento')),
       );
       return;
     }
@@ -309,9 +310,8 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
       final treatment = Treatment(
         id: '',
         name: name,
-        dosage: dosage,
-        frequency: frequency,
-        nextDose: DateTime.now().add(const Duration(hours: 24)),
+        description: description,
+        medications: medications,
         userId: user.uid,
       );
 
@@ -340,20 +340,30 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     }
   }
 
-  Future<void> _completeDose(Treatment treatment) async {
+  Future<void> _completeDose(Treatment treatment, Medication medication) async {
     try {
       DateTime now = DateTime.now();
-      Duration frequency = _getFrequencyDuration(treatment.frequency);
+      Duration frequency = _getFrequencyDuration(medication.frequency);
       DateTime nextDose = now.add(frequency);
 
+      // Actualizar el medicamento específico en la lista
+      final updatedMedications = treatment.medications.map((med) {
+        if (med.id == medication.id) {
+          return med.copyWith(
+            lastDose: now,
+            nextDose: nextDose,
+            isCompleted: true,
+          );
+        }
+        return med;
+      }).toList();
+
       await _firestore.collection('treatments').doc(treatment.id).update({
-        'lastDose': now,
-        'nextDose': nextDose,
-        'isCompleted': true,
+        'medications': updatedMedications.map((med) => med.toMap()).toList(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dosis registrada')),
+        SnackBar(content: Text('Dosis de ${medication.name} registrada')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -364,6 +374,8 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
 
   Duration _getFrequencyDuration(String frequency) {
     switch (frequency) {
+      case 'Cada 6 horas':
+        return const Duration(hours: 6);
       case 'Cada 8 horas':
         return const Duration(hours: 8);
       case 'Cada 12 horas':
@@ -378,16 +390,15 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     BuildContext context,
     Treatment treatment,
   ) {
-    Duration timeUntilNextDose = treatment.nextDose.difference(DateTime.now());
-    bool isDoseAvailable = timeUntilNextDose.isNegative;
-
     return Card(
       elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Encabezado del tratamiento
             Row(
               children: [
                 Container(
@@ -396,7 +407,7 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                     color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.medication, color: Colors.blue),
+                  child: const Icon(Icons.healing, color: Colors.blue),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -406,21 +417,17 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                       Text(
                         treatment.name,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        treatment.dosage,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      ),
+                      if (treatment.description.isNotEmpty)
+                        Text(
+                          treatment.description,
+                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        ),
                     ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.check_circle),
-                  color: isDoseAvailable ? Colors.green : Colors.grey,
-                  onPressed: isDoseAvailable ? () => _completeDose(treatment) : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
@@ -429,22 +436,98 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            // Lista de medicamentos
+            Text(
+              'Medicamentos (${treatment.medications.length})',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
             const SizedBox(height: 12),
-            _buildNextDoseTimer(treatment),
+            ...treatment.medications.map((medication) =>
+                _buildMedicationItem(context, treatment, medication)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNextDoseTimer(Treatment treatment) {
+  Widget _buildMedicationItem(
+    BuildContext context,
+    Treatment treatment,
+    Medication medication,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.medication, color: Colors.blue, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      medication.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '${medication.dosage} - ${medication.frequency}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildDoseButton(treatment, medication),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildMedicationTimer(medication),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoseButton(Treatment treatment, Medication medication) {
+    Duration timeUntilNextDose = medication.nextDose.difference(DateTime.now());
+    bool isDoseAvailable = timeUntilNextDose.isNegative;
+
+    return IconButton(
+      icon: const Icon(Icons.check_circle),
+      color: isDoseAvailable ? Colors.green : Colors.grey,
+      onPressed: isDoseAvailable ? () => _completeDose(treatment, medication) : null,
+      tooltip: isDoseAvailable ? 'Registrar dosis' : 'Dosis no disponible aún',
+    );
+  }
+
+  Widget _buildMedicationTimer(Medication medication) {
     return StreamBuilder<Duration>(
       stream: Stream.periodic(const Duration(seconds: 1), (_) {
-        return treatment.nextDose.difference(DateTime.now());
+        return medication.nextDose.difference(DateTime.now());
       }),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
-        
+
         Duration timeLeft = snapshot.data!;
         bool isDoseAvailable = timeLeft.isNegative;
 
@@ -457,12 +540,13 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
               border: Border.all(color: Colors.green.shade200),
             ),
             child: const Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.check_circle_outline, color: Colors.green, size: 16),
                 SizedBox(width: 8),
                 Text(
                   'Dosis disponible',
-                  style: TextStyle(color: Colors.green),
+                  style: TextStyle(color: Colors.green, fontSize: 12),
                 ),
               ],
             ),
@@ -477,12 +561,13 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
             border: Border.all(color: Colors.blue.shade200),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.timer, color: Colors.blue, size: 16),
               const SizedBox(width: 8),
               Text(
-                'Próxima dosis en: ${_formatDuration(timeLeft)}',
-                style: const TextStyle(color: Colors.blue),
+                'Próxima dosis: ${_formatDuration(timeLeft)}',
+                style: const TextStyle(color: Colors.blue, fontSize: 12),
               ),
             ],
           ),
@@ -533,7 +618,7 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
   }
 }
 
-// Add this new dialog widget at the bottom of the file
+// Dialog para agregar tratamiento con múltiples medicamentos
 class AddTreatmentDialog extends StatefulWidget {
   const AddTreatmentDialog({super.key});
 
@@ -542,47 +627,183 @@ class AddTreatmentDialog extends StatefulWidget {
 }
 
 class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
-  final _nameController = TextEditingController();
-  final _dosageController = TextEditingController();
-  final _nameFocusNode = FocusNode();
-  String _frequency = 'Diario';
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nameFocusNode.requestFocus();
-    });
-  }
+  final _treatmentNameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final List<Medication> _medications = [];
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Agregar Tratamiento'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _treatmentNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del Tratamiento',
+                  hintText: 'Ej: Tratamiento para Asma',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción (opcional)',
+                  hintText: 'Detalles del tratamiento',
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Medicamentos',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _addMedication,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Agregar'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_medications.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'No hay medicamentos agregados',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                )
+              else
+                ..._medications.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final med = entry.value;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: const Icon(Icons.medication, color: Colors.blue),
+                      title: Text(med.name),
+                      subtitle: Text('${med.dosage} - ${med.frequency}'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _removeMedication(index),
+                      ),
+                    ),
+                  );
+                }),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context, {
+              'name': _treatmentNameController.text,
+              'description': _descriptionController.text,
+              'medications': _medications,
+            });
+          },
+          child: const Text('Guardar'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _addMedication() async {
+    final result = await showDialog<Medication>(
+      context: context,
+      builder: (context) => const AddMedicationDialog(),
+    );
+
+    if (result != null) {
+      setState(() {
+        _medications.add(result);
+      });
+    }
+  }
+
+  void _removeMedication(int index) {
+    setState(() {
+      _medications.removeAt(index);
+    });
+  }
+
+  @override
+  void dispose() {
+    _treatmentNameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+}
+
+// Dialog para agregar un medicamento individual
+class AddMedicationDialog extends StatefulWidget {
+  const AddMedicationDialog({super.key});
+
+  @override
+  State<AddMedicationDialog> createState() => _AddMedicationDialogState();
+}
+
+class _AddMedicationDialogState extends State<AddMedicationDialog> {
+  final _nameController = TextEditingController();
+  final _dosageController = TextEditingController();
+  String _frequency = 'Diario';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Agregar Medicamento'),
       content: SingleChildScrollView(
-        child: ListBody(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _nameController,
-              focusNode: _nameFocusNode,
               autofocus: true,
               decoration: const InputDecoration(
                 labelText: 'Nombre del medicamento',
+                hintText: 'Ej: Salbutamol',
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _dosageController,
-              decoration: const InputDecoration(labelText: 'Dosis'),
+              decoration: const InputDecoration(
+                labelText: 'Dosis',
+                hintText: 'Ej: 100mg, 2 puff',
+              ),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _frequency,
               decoration: const InputDecoration(labelText: 'Frecuencia'),
-              items:
-                  ['Diario', 'Cada 12 horas', 'Cada 8 horas']
-                      .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                      .toList(),
+              items: ['Diario', 'Cada 12 horas', 'Cada 8 horas', 'Cada 6 horas']
+                  .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                  .toList(),
               onChanged: (value) => setState(() => _frequency = value!),
             ),
           ],
@@ -593,13 +814,25 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
-        TextButton(
+        ElevatedButton(
           onPressed: () {
-            Navigator.pop(context, {
-              'name': _nameController.text,
-              'dosage': _dosageController.text,
-              'frequency': _frequency,
-            });
+            if (_nameController.text.trim().isEmpty ||
+                _dosageController.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Por favor completa todos los campos')),
+              );
+              return;
+            }
+
+            final medication = Medication(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              name: _nameController.text.trim(),
+              dosage: _dosageController.text.trim(),
+              frequency: _frequency,
+              nextDose: DateTime.now().add(_getFrequencyDuration(_frequency)),
+            );
+
+            Navigator.pop(context, medication);
           },
           child: const Text('Agregar'),
         ),
@@ -607,11 +840,24 @@ class _AddTreatmentDialogState extends State<AddTreatmentDialog> {
     );
   }
 
+  Duration _getFrequencyDuration(String frequency) {
+    switch (frequency) {
+      case 'Cada 6 horas':
+        return const Duration(hours: 6);
+      case 'Cada 8 horas':
+        return const Duration(hours: 8);
+      case 'Cada 12 horas':
+        return const Duration(hours: 12);
+      case 'Diario':
+      default:
+        return const Duration(hours: 24);
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _dosageController.dispose();
-    _nameFocusNode.dispose();
     super.dispose();
   }
 }
