@@ -572,11 +572,18 @@ class _TreatmentCardExpansionState extends State<TreatmentCardExpansion> {
                           color: Colors.black87,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, size: 20),
-                        color: Colors.red,
-                        onPressed: widget.onDelete,
-                        tooltip: 'Eliminar tratamiento',
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.treatment.useSharedSettings)
+                            _buildSharedDoseButton(),
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 20),
+                            color: Colors.red,
+                            onPressed: widget.onDelete,
+                            tooltip: 'Eliminar tratamiento',
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -664,7 +671,7 @@ class _TreatmentCardExpansionState extends State<TreatmentCardExpansion> {
                   ],
                 ),
               ),
-              if (!isExpired) _buildDoseButton(treatment, medication),
+              if (!isExpired && !treatment.useSharedSettings) _buildDoseButton(treatment, medication),
             ],
           ),
           const SizedBox(height: 8),
@@ -748,6 +755,39 @@ class _TreatmentCardExpansionState extends State<TreatmentCardExpansion> {
     String minutes = twoDigits(duration.inMinutes.remainder(60));
     String seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$hours:$minutes:$seconds';
+  }
+
+  Widget _buildSharedDoseButton() {
+    // Verificar si algún medicamento tiene dosis disponible
+    bool anyDoseAvailable = widget.treatment.medications.any((med) {
+      if (med.isExpired) return false;
+      Duration timeUntilNextDose = med.nextDose.difference(DateTime.now());
+      return timeUntilNextDose.isNegative;
+    });
+
+    // Verificar si todos los medicamentos están expirados
+    bool allExpired = widget.treatment.medications.every((med) => med.isExpired);
+
+    if (allExpired) return const SizedBox.shrink();
+
+    return IconButton(
+      icon: const Icon(Icons.check_circle, size: 20),
+      color: anyDoseAvailable ? Colors.green : Colors.grey,
+      onPressed: anyDoseAvailable ? _completeAllDoses : null,
+      tooltip: anyDoseAvailable ? 'Registrar dosis de todos' : 'Dosis no disponible aún',
+    );
+  }
+
+  Future<void> _completeAllDoses() async {
+    // Registrar dosis para todos los medicamentos activos
+    for (var medication in widget.treatment.medications) {
+      if (!medication.isExpired) {
+        Duration timeUntilNextDose = medication.nextDose.difference(DateTime.now());
+        if (timeUntilNextDose.isNegative) {
+          await widget.onCompleteDose(medication);
+        }
+      }
+    }
   }
 
   Widget _buildActionButton(
