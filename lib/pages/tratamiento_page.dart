@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'login_page.dart';
 import '../models/treatment.dart';
 import '../models/medication.dart';
+import '../services/notification_service.dart';
 
 class TratamientoPage extends StatelessWidget {
   const TratamientoPage({super.key});
@@ -114,6 +115,7 @@ class TratamientoPageContent extends StatefulWidget {
 class _TratamientoPageContentState extends State<TratamientoPageContent> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final NotificationService _notificationService = NotificationService();
 
   @override
   Widget build(BuildContext context) {
@@ -321,10 +323,24 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
         sharedDurationDays: sharedDurationDays,
       );
 
-      await _firestore.collection('treatments').add(treatment.toMap());
+      final docRef = await _firestore.collection('treatments').add(treatment.toMap());
+
+      // Mostrar notificación de confirmación
+      await _notificationService.showNotification(
+        id: DateTime.now().millisecondsSinceEpoch % 100000,
+        title: '✅ Tratamiento Agregado',
+        body: 'El tratamiento "$name" se ha agregado correctamente con ${medications.length} medicamento(s)',
+        payload: 'treatment_${docRef.id}',
+      );
+
+      // Programar notificaciones para cada medicamento
+      await _scheduleMedicationNotifications(medications);
 
       messenger.showSnackBar(
-        const SnackBar(content: Text('Tratamiento agregado exitosamente')),
+        const SnackBar(
+          content: Text('Tratamiento agregado exitosamente con recordatorios activados'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -333,8 +349,38 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
     }
   }
 
+  Future<void> _scheduleMedicationNotifications(List<Medication> medications) async {
+    try {
+      for (var medication in medications) {
+        final frequency = _getFrequencyDuration(medication.frequency);
+
+        await _notificationService.scheduleMedicationReminders(
+          medicationId: medication.id,
+          medicationName: medication.name,
+          dosage: medication.dosage,
+          startTime: medication.nextDose,
+          frequency: frequency,
+          durationDays: medication.durationDays,
+        );
+      }
+    } catch (e) {
+      print('Error al programar notificaciones: $e');
+    }
+  }
+
   Future<void> _deleteTreatment(String treatmentId) async {
     try {
+      // Obtener el tratamiento antes de eliminarlo para cancelar notificaciones
+      final doc = await _firestore.collection('treatments').doc(treatmentId).get();
+      if (doc.exists) {
+        final treatment = Treatment.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+
+        // Cancelar notificaciones de todos los medicamentos
+        for (var medication in treatment.medications) {
+          await _notificationService.cancelMedicationNotifications(medication.id);
+        }
+      }
+
       await _firestore.collection('treatments').doc(treatmentId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tratamiento eliminado')),
@@ -368,8 +414,23 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
         'medications': updatedMedications.map((med) => med.toMap()).toList(),
       });
 
+      // Reprogramar notificaciones para el medicamento actualizado
+      final updatedMed = updatedMedications.firstWhere((med) => med.id == medication.id);
+      await _notificationService.cancelMedicationNotifications(medication.id);
+      await _notificationService.scheduleMedicationReminders(
+        medicationId: updatedMed.id,
+        medicationName: updatedMed.name,
+        dosage: updatedMed.dosage,
+        startTime: updatedMed.nextDose,
+        frequency: frequency,
+        durationDays: updatedMed.daysRemaining,
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Dosis de ${medication.name} registrada')),
+        SnackBar(
+          content: Text('Dosis de ${medication.name} registrada. Próxima dosis programada'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
