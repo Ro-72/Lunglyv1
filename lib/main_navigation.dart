@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'services/auth_service.dart';
 import 'pages/inicio_page.dart';
@@ -40,7 +41,7 @@ class _MainNavigationState extends State<MainNavigation> {
           });
         } else {
           // Si ya estás en inicio, sal de la app
-          Navigator.of(context).pop();
+          SystemNavigator.pop();
         }
       },
       child: Scaffold(
