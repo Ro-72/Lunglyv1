@@ -120,7 +120,7 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contacto de Emergencia'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         actions: [
           if (_hasContact && !_isEditing)
             IconButton(

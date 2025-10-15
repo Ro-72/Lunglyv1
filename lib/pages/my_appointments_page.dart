@@ -15,7 +15,7 @@ class MyAppointmentsPage extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Mis Citas'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
         body: const Center(
           child: Text('Debes iniciar sesión para ver tus citas'),
@@ -26,7 +26,7 @@ class MyAppointmentsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Citas'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

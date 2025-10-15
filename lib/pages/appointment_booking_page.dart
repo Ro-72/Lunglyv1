@@ -155,7 +155,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Agendar Cita - ${widget.doctor.name}'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Column(
         children: [

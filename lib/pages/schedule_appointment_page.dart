@@ -45,7 +45,7 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agendar Cita'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(100),
           child: Column(

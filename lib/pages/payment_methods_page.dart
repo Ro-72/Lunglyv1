@@ -22,7 +22,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Métodos de Pago'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
         body: const Center(
           child: Text('Debes iniciar sesión para ver tus métodos de pago'),
@@ -33,7 +33,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Métodos de Pago'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore

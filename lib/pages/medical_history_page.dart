@@ -123,7 +123,7 @@ class _MedicalHistoryPageState extends State<MedicalHistoryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Historial Médico'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Column(
         children: [

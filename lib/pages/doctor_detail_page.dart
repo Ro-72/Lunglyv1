@@ -12,7 +12,7 @@ class DoctorDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Perfil del Médico'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: SingleChildScrollView(
         child: Column(

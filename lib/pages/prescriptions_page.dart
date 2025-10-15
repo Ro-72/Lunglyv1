@@ -153,7 +153,7 @@ class _PrescriptionsPageState extends State<PrescriptionsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Recetas'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Column(
         children: [

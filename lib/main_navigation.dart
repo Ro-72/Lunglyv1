@@ -20,6 +20,25 @@ class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   final _authService = AuthService();
 
+  // GlobalKeys for nested navigators
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
+
+  Widget _buildNavigator(int index, Widget page) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (routeSettings) {
+        return MaterialPageRoute(
+          builder: (context) => page,
+        );
+      },
+    );
+  }
+
   final List<Widget> _pages = [
     const InicioPage(),
     const ChatbotPage(),
@@ -31,8 +50,15 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvoked: (didPop) async {
         if (didPop) return;
+
+        // Check if the current tab's navigator can pop
+        final navigatorState = _navigatorKeys[_currentIndex].currentState;
+        if (navigatorState != null && navigatorState.canPop()) {
+          navigatorState.pop();
+          return;
+        }
 
         // Si no estás en la página de inicio, ve a inicio
         if (_currentIndex != 0) {
@@ -69,7 +95,7 @@ class _MainNavigationState extends State<MainNavigation> {
           iconTheme: const IconThemeData(color: Colors.white),
         ),
         drawer: _buildDrawer(context),
-        body: _pages[_currentIndex],
+        body: _buildNavigator(_currentIndex, _pages[_currentIndex]),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) {
