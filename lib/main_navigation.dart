@@ -8,6 +8,8 @@ import 'pages/medico_page.dart';
 import 'pages/tratamiento_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/payment_methods_page.dart';
+import 'pages/settings_page.dart';
+import 'pages/about_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -176,17 +178,21 @@ class _MainNavigationState extends State<MainNavigation> {
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Configuración'),
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to settings page
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('Acerca de'),
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to about page
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AboutPage()),
+              );
             },
           ),
           const Divider(),

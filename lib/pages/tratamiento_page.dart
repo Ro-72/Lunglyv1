@@ -5,6 +5,8 @@ import 'login_page.dart';
 import '../models/treatment.dart';
 import '../models/medication.dart';
 import '../services/notification_service.dart';
+import 'treatment_history_page.dart';
+import 'treatment_progress_page.dart';
 
 class TratamientoPage extends StatelessWidget {
   const TratamientoPage({super.key});
@@ -239,7 +241,12 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                         label: 'Historial',
                         color: Colors.orange,
                         onTap: () {
-                          // View treatment history
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TreatmentHistoryPage(),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -267,7 +274,12 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                         label: 'Progreso',
                         color: Colors.green,
                         onTap: () {
-                          // View progress
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TreatmentProgressPage(),
+                            ),
+                          );
                         },
                       ),
                     ),
