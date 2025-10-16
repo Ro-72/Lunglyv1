@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'services/auth_service.dart';
 import 'pages/inicio_page.dart';
 import 'pages/chatbot_page.dart';
@@ -34,9 +33,7 @@ class _MainNavigationState extends State<MainNavigation> {
     return Navigator(
       key: _navigatorKeys[index],
       onGenerateRoute: (routeSettings) {
-        return MaterialPageRoute(
-          builder: (context) => page,
-        );
+        return MaterialPageRoute(builder: (context) => page);
       },
     );
   }
@@ -76,8 +73,8 @@ class _MainNavigationState extends State<MainNavigation> {
         appBar: AppBar(
           title: Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 'Lungly',
                 style: TextStyle(
                   color: Colors.white,
@@ -85,11 +82,15 @@ class _MainNavigationState extends State<MainNavigation> {
                   fontSize: 24,
                 ),
               ),
-              SizedBox(width: 8),
-              FaIcon(
-                FontAwesomeIcons.lungs,
-                color: Colors.white,
-                size: 24,
+              const SizedBox(width: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.asset(
+                  'assets/icons/lungly2.jpg',
+                  height: 40,
+                  width: 40,
+                  fit: BoxFit.cover,
+                ),
               ),
             ],
           ),
@@ -138,11 +139,7 @@ class _MainNavigationState extends State<MainNavigation> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Icon(
-                  Icons.account_circle,
-                  size: 64,
-                  color: Colors.white,
-                ),
+                const Icon(Icons.account_circle, size: 64, color: Colors.white),
                 const SizedBox(height: 8),
                 Text(
                   _authService.currentUser?.email ?? 'User',
@@ -170,7 +167,9 @@ class _MainNavigationState extends State<MainNavigation> {
               // Navegar sin cerrar el drawer
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const PaymentMethodsPage()),
+                MaterialPageRoute(
+                  builder: (context) => const PaymentMethodsPage(),
+                ),
               );
               // El drawer permanece abierto cuando regresas
             },
