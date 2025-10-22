@@ -31,7 +31,8 @@ class AboutPage extends StatelessWidget {
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    width: 120,
+                    height: 120,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -43,10 +44,14 @@ class AboutPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const FaIcon(
-                      FontAwesomeIcons.lungs,
-                      size: 60,
-                      color: Color(0xFF4990E2),
+                    child: ClipOval(
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Image.asset(
+                          'assets/icons/lungly1.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
