@@ -23,30 +23,37 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
 
   Map<String, List<String>> _availableSlots = {};
   Map<String, bool> _dateAvailability = {};
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _currentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
-    _initializeDefaultAvailability();
-    _loadAvailability();
+    _initializeAvailability();
   }
 
-  // Inicializar todos los días como disponibles por defecto
-  void _initializeDefaultAvailability() {
+  Future<void> _initializeAvailability() async {
+    setState(() => _isLoading = true);
+
     final now = DateTime.now();
     final endDate = DateTime(now.year, now.month + _monthsToShow, now.day);
 
+    // Inicializar todos los días como disponibles por defecto
     for (int i = 0; i < (endDate.difference(now).inDays + 1); i++) {
       final date = now.add(Duration(days: i));
       final dateKey = _getDateKey(date);
-
-      // Marcar todos los días futuros como disponibles inicialmente
       _dateAvailability[dateKey] = true;
+    }
+
+    await _loadAvailability();
+
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
   Future<void> _loadAvailability() async {
+    print('ERROR HERE - loadAvailability started');
     final now = DateTime.now();
     final endDate = DateTime(now.year, now.month + _monthsToShow, now.day);
 
@@ -54,12 +61,14 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     final dateStart = DateTime(now.year, now.month, now.day);
     final dateEnd = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
 
+    print('ERROR HERE - fetching appointments from Firestore');
     final allAppointments = await _firestore
         .collection('appointments')
         .where('doctorId', isEqualTo: widget.doctor.id)
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dateStart))
         .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
         .get();
+    print('ERROR HERE - fetched ${allAppointments.docs.length} appointments');
 
     // Agrupar citas por fecha
     Map<String, List<Appointment>> appointmentsByDate = {};
@@ -68,6 +77,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
       final dateKey = _getDateKey(appointment.date);
       appointmentsByDate.putIfAbsent(dateKey, () => []).add(appointment);
     }
+    print('ERROR HERE - grouped appointments by date');
 
     // Calcular slots disponibles para cada día
     for (int i = 0; i < (endDate.difference(now).inDays + 1); i++) {
@@ -79,16 +89,17 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
       _availableSlots[dateKey] = slots;
       _dateAvailability[dateKey] = slots.isNotEmpty;
     }
+    print('ERROR HERE - calculated slots for all days');
 
-    if (mounted) setState(() {});
+    if (mounted) {
+      print('ERROR HERE - calling setState');
+      setState(() {});
+      print('ERROR HERE - setState completed');
+    } else {
+      print('ERROR HERE - not mounted, skipping setState');
+    }
   }
 
-  Future<bool> _hasAvailableSlots(DateTime date) async {
-    final slots = await _getAvailableSlotsForDate(date);
-    return slots.isNotEmpty;
-  }
-
-  // Calcular slots disponibles sin hacer consulta a Firestore
   List<String> _calculateAvailableSlotsForDate(DateTime date, List<Appointment> appointments) {
     // No permitir fechas pasadas
     final today = DateTime.now();
@@ -100,8 +111,8 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     }
 
     // Horario de trabajo del doctor (8am - 4pm = 8 horas)
-    final startHour = 8;
-    final endHour = 16;
+    const startHour = 8;
+    const endHour = 16;
 
     // Crear lista de horarios disponibles
     List<String> availableSlots = [];
@@ -116,7 +127,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     }
 
     // Generar slots disponibles para todas las horas del día
-    // Solo se muestran las horas que no están ocupadas
     for (int hour = startHour; hour < endHour; hour++) {
       if (!bookedHours.contains(hour)) {
         final timeStr = '${hour.toString().padLeft(2, '0')}:00';
@@ -125,25 +135,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     }
 
     return availableSlots;
-  }
-
-  Future<List<String>> _getAvailableSlotsForDate(DateTime date) async {
-    // Obtener citas existentes para este día
-    final dateStart = DateTime(date.year, date.month, date.day);
-    final dateEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
-
-    final appointments = await _firestore
-        .collection('appointments')
-        .where('doctorId', isEqualTo: widget.doctor.id)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dateStart))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
-        .get();
-
-    final dayAppointments = appointments.docs
-        .map((doc) => Appointment.fromMap(doc.data(), doc.id))
-        .toList();
-
-    return _calculateAvailableSlotsForDate(date, dayAppointments);
   }
 
   String _getDateKey(DateTime date) {
@@ -157,16 +148,18 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
         title: Text('Agendar Cita - ${widget.doctor.name}'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      body: Column(
-        children: [
-          _buildDoctorInfo(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _buildCalendar(),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildDoctorInfo(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: _buildCalendar(),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -280,9 +273,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                     return GestureDetector(
                       onTap: isPast || !isAvailable
                           ? null
-                          : () {
-                              _showTimeSelectionDialog(date);
-                            },
+                          : () => _showTimeSelectionDialog(date),
                       child: Container(
                         width: 40,
                         height: 40,
@@ -330,11 +321,10 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
 
   Future<void> _showTimeSelectionDialog(DateTime selectedDate) async {
     final dateKey = _getDateKey(selectedDate);
-    final slots = await _getAvailableSlotsForDate(selectedDate);
-
-    if (!mounted) return;
+    final slots = _availableSlots[dateKey] ?? [];
 
     if (slots.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No hay horarios disponibles para esta fecha'),
@@ -347,9 +337,11 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     String? selectedTime;
     int selectedDuration = 1;
 
-    await showDialog(
+    if (!mounted) return;
+
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -479,18 +471,16 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(dialogContext),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: selectedTime != null
-                      ? () async {
-                          Navigator.pop(context);
-                          await _showPaymentMethodDialog(
-                            selectedDate,
-                            selectedTime!,
-                            selectedDuration,
-                          );
+                      ? () {
+                          Navigator.pop(dialogContext, {
+                            'time': selectedTime,
+                            'duration': selectedDuration,
+                          });
                         }
                       : null,
                   child: const Text('Confirmar Cita'),
@@ -501,6 +491,10 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
         );
       },
     );
+
+    if (result != null && mounted) {
+      await _showPaymentMethodDialog(selectedDate, result['time'], result['duration']);
+    }
   }
 
   Future<void> _showPaymentMethodDialog(DateTime date, String time, int duration) async {
@@ -519,79 +513,63 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
 
     if (!mounted) return;
 
-    PaymentMethod? selectedMethod;
-    if (paymentMethods.isNotEmpty) {
-      // Si hay métodos guardados, usar el predeterminado o el primero
-      selectedMethod = paymentMethods.firstWhere(
-        (method) => method.isDefault,
-        orElse: () => paymentMethods.first,
-      );
-    }
-
     final result = await showDialog<PaymentType>(
       context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Método de Pago'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Selecciona el método de pago para esta cita:',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 16),
-                  if (paymentMethods.isEmpty)
-                    const Text(
-                      'No tienes métodos de pago guardados.\nSelecciona una opción para continuar:',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  const SizedBox(height: 16),
-                  _buildPaymentOption(
-                    context,
-                    icon: Icons.credit_card,
-                    title: 'Tarjeta de Crédito',
-                    type: PaymentType.creditCard,
-                    savedMethod: paymentMethods.any((m) => m.type == PaymentType.creditCard)
-                        ? paymentMethods.firstWhere((m) => m.type == PaymentType.creditCard)
-                        : null,
-                    onTap: () => Navigator.pop(context, PaymentType.creditCard),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPaymentOption(
-                    context,
-                    icon: Icons.paypal,
-                    title: 'PayPal',
-                    type: PaymentType.paypal,
-                    savedMethod: paymentMethods.any((m) => m.type == PaymentType.paypal)
-                        ? paymentMethods.firstWhere((m) => m.type == PaymentType.paypal)
-                        : null,
-                    onTap: () => Navigator.pop(context, PaymentType.paypal),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPaymentOption(
-                    context,
-                    icon: Icons.account_balance,
-                    title: 'Transferencia Bancaria',
-                    type: PaymentType.bankTransfer,
-                    savedMethod: paymentMethods.any((m) => m.type == PaymentType.bankTransfer)
-                        ? paymentMethods.firstWhere((m) => m.type == PaymentType.bankTransfer)
-                        : null,
-                    onTap: () => Navigator.pop(context, PaymentType.bankTransfer),
-                  ),
-                ],
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Método de Pago'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Selecciona el método de pago para esta cita:',
+                style: TextStyle(fontSize: 14),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar'),
+              const SizedBox(height: 16),
+              if (paymentMethods.isEmpty)
+                const Text(
+                  'No tienes métodos de pago guardados.\nSelecciona una opción para continuar:',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-              ],
-            );
-          },
+              const SizedBox(height: 16),
+              _buildPaymentOption(
+                dialogContext,
+                icon: Icons.credit_card,
+                title: 'Tarjeta de Crédito',
+                savedMethod: paymentMethods.any((m) => m.type == PaymentType.creditCard)
+                    ? paymentMethods.firstWhere((m) => m.type == PaymentType.creditCard)
+                    : null,
+                onTap: () => Navigator.pop(dialogContext, PaymentType.creditCard),
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentOption(
+                dialogContext,
+                icon: Icons.paypal,
+                title: 'PayPal',
+                savedMethod: paymentMethods.any((m) => m.type == PaymentType.paypal)
+                    ? paymentMethods.firstWhere((m) => m.type == PaymentType.paypal)
+                    : null,
+                onTap: () => Navigator.pop(dialogContext, PaymentType.paypal),
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentOption(
+                dialogContext,
+                icon: Icons.account_balance,
+                title: 'Transferencia Bancaria',
+                savedMethod: paymentMethods.any((m) => m.type == PaymentType.bankTransfer)
+                    ? paymentMethods.firstWhere((m) => m.type == PaymentType.bankTransfer)
+                    : null,
+                onTap: () => Navigator.pop(dialogContext, PaymentType.bankTransfer),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+          ],
         );
       },
     );
@@ -605,7 +583,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     BuildContext context, {
     required IconData icon,
     required String title,
-    required PaymentType type,
     PaymentMethod? savedMethod,
     required VoidCallback onTap,
   }) {
@@ -651,55 +628,115 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   }
 
   Future<void> _processPayment(PaymentType paymentType, DateTime date, String time, int duration) async {
+    print('ERROR HERE - processPayment started');
+    if (!mounted) {
+      print('ERROR HERE - not mounted at start');
+      return;
+    }
+
+    // Guardar el contexto del scaffold antes de operaciones async
+    final scaffoldContext = context;
+
     // Mostrar dialog de procesamiento
+    print('ERROR HERE - showing loading dialog');
     showDialog(
-      context: context,
+      context: scaffoldContext,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (loadingContext) => const Center(
         child: CircularProgressIndicator(),
       ),
     );
 
-    // Simular procesamiento de pago
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Simular procesamiento de pago
+      print('ERROR HERE - simulating payment processing');
+      await Future.delayed(const Duration(seconds: 2));
+      print('ERROR HERE - payment processing completed');
 
-    if (!mounted) return;
-    Navigator.pop(context); // Cerrar loading
+      if (!mounted) {
+        print('ERROR HERE - not mounted after delay');
+        return;
+      }
 
-    // Mostrar confirmación de pago
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
-        title: const Text('¡Pago Validado!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Tu pago ha sido procesado exitosamente.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Método: ${_getPaymentTypeName(paymentType)}',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
+      // Cerrar loading dialog
+      print('ERROR HERE - closing loading dialog');
+      Navigator.of(scaffoldContext).pop();
+      print('ERROR HERE - loading dialog closed');
+
+      if (!mounted) {
+        print('ERROR HERE - not mounted after closing loading');
+        return;
+      }
+
+      // Procesar el appointment directamente sin dialog adicional
+      print('ERROR HERE - about to book appointment');
+      print('ERROR HERE - mounted before booking: $mounted');
+
+      if (!mounted) {
+        print('ERROR HERE - not mounted before booking');
+        return;
+      }
+
+      // Llamar directamente a bookAppointment
+      await _bookAppointment(date, time, duration, paymentType);
+      print('ERROR HERE - bookAppointment completed');
+
+      if (!mounted) {
+        print('ERROR HERE - not mounted after booking');
+        return;
+      }
+
+      // Mostrar confirmación DESPUÉS de guardar exitosamente
+      print('ERROR HERE - showing success confirmation dialog');
+      await showDialog<void>(
+        context: scaffoldContext,
+        barrierDismissible: false,
+        builder: (confirmContext) => AlertDialog(
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
+          title: const Text('¡Cita Agendada!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Tu cita ha sido agendada exitosamente.',
+                textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Fecha: ${_getDateString(date)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Hora: $time',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                print('ERROR HERE - aceptar button pressed');
+                Navigator.of(confirmContext).pop();
+                print('ERROR HERE - success dialog closed');
+              },
+              child: const Text('Aceptar'),
             ),
           ],
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Continuar'),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if (confirmed == true && mounted) {
-      await _bookAppointment(date, time, duration, paymentType);
+      print('ERROR HERE - all done!');
+    } catch (e) {
+      print('ERROR HERE - caught exception: $e');
+      if (!mounted) return;
+      Navigator.of(scaffoldContext).pop(); // Cerrar loading si hay error
+      if (!mounted) return;
+      ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+        SnackBar(
+          content: Text('Error al procesar el pago: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -715,13 +752,21 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   }
 
   Future<void> _bookAppointment(DateTime date, String time, int duration, PaymentType paymentType) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    print('ERROR HERE - bookAppointment started');
+    print('ERROR HERE - mounted at start: $mounted');
 
-    final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('ERROR HERE - user is null');
+      return;
+    }
+
+    print('ERROR HERE - user is ${user.uid}');
+    print('ERROR HERE - doctor.id is ${widget.doctor.id}');
+    print('ERROR HERE - date: $date, time: $time, duration: $duration');
 
     try {
+      print('ERROR HERE - creating appointment object');
       final appointment = Appointment(
         id: '',
         doctorId: widget.doctor.id,
@@ -733,22 +778,46 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
         paymentMethod: paymentType.toString().split('.').last,
       );
 
-      await _firestore.collection('appointments').add(appointment.toMap());
+      print('ERROR HERE - appointment map: ${appointment.toMap()}');
+      print('ERROR HERE - adding appointment to Firestore');
 
-      messenger.showSnackBar(
+      final docRef = await _firestore.collection('appointments').add(appointment.toMap());
+
+      print('ERROR HERE - appointment added to Firestore successfully with ID: ${docRef.id}');
+      print('ERROR HERE - mounted after Firestore add: $mounted');
+
+      if (!mounted) {
+        print('ERROR HERE - not mounted after Firestore add, returning early');
+        return;
+      }
+
+      print('ERROR HERE - showing success snackbar');
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('¡Cita agendada exitosamente!'),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
         ),
       );
+      print('ERROR HERE - snackbar shown');
 
       // Recargar disponibilidad
+      print('ERROR HERE - reloading availability');
       await _loadAvailability();
+      print('ERROR HERE - availability reloaded');
+    } catch (e, stackTrace) {
+      print('ERROR HERE - bookAppointment exception: $e');
+      print('ERROR HERE - stackTrace: $stackTrace');
+      if (!mounted) {
+        print('ERROR HERE - not mounted in catch block');
+        return;
+      }
 
-      navigator.pop();
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Error al agendar cita: $e')),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al agendar cita: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
