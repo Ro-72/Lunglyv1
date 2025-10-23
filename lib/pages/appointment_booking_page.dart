@@ -53,7 +53,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   }
 
   Future<void> _loadAvailability() async {
-    print('ERROR HERE - loadAvailability started');
     final now = DateTime.now();
     final endDate = DateTime(now.year, now.month + _monthsToShow, now.day);
 
@@ -61,14 +60,12 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     final dateStart = DateTime(now.year, now.month, now.day);
     final dateEnd = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
 
-    print('ERROR HERE - fetching appointments from Firestore');
     final allAppointments = await _firestore
         .collection('appointments')
         .where('doctorId', isEqualTo: widget.doctor.id)
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dateStart))
         .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
         .get();
-    print('ERROR HERE - fetched ${allAppointments.docs.length} appointments');
 
     // Agrupar citas por fecha
     Map<String, List<Appointment>> appointmentsByDate = {};
@@ -77,7 +74,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
       final dateKey = _getDateKey(appointment.date);
       appointmentsByDate.putIfAbsent(dateKey, () => []).add(appointment);
     }
-    print('ERROR HERE - grouped appointments by date');
 
     // Calcular slots disponibles para cada día
     for (int i = 0; i < (endDate.difference(now).inDays + 1); i++) {
@@ -89,15 +85,8 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
       _availableSlots[dateKey] = slots;
       _dateAvailability[dateKey] = slots.isNotEmpty;
     }
-    print('ERROR HERE - calculated slots for all days');
 
-    if (mounted) {
-      print('ERROR HERE - calling setState');
-      setState(() {});
-      print('ERROR HERE - setState completed');
-    } else {
-      print('ERROR HERE - not mounted, skipping setState');
-    }
+    if (mounted) setState(() {});
   }
 
   List<String> _calculateAvailableSlotsForDate(DateTime date, List<Appointment> appointments) {
@@ -498,68 +487,39 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   }
 
   Future<void> _showPaymentMethodDialog(DateTime date, String time, int duration) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
-    // Obtener métodos de pago del usuario
-    final paymentMethodsSnapshot = await _firestore
-        .collection('payment_methods')
-        .where('userId', isEqualTo: user.uid)
-        .get();
-
-    final paymentMethods = paymentMethodsSnapshot.docs
-        .map((doc) => PaymentMethod.fromMap(doc.data(), doc.id))
-        .toList();
-
     if (!mounted) return;
 
     final result = await showDialog<PaymentType>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Método de Pago'),
+          title: const Text('Confirmar Cita'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Selecciona el método de pago para esta cita:',
+                'Selecciona el método de pago:',
                 style: TextStyle(fontSize: 14),
               ),
-              const SizedBox(height: 16),
-              if (paymentMethods.isEmpty)
-                const Text(
-                  'No tienes métodos de pago guardados.\nSelecciona una opción para continuar:',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              const SizedBox(height: 16),
-              _buildPaymentOption(
+              const SizedBox(height: 20),
+              _buildSimplePaymentOption(
                 dialogContext,
                 icon: Icons.credit_card,
-                title: 'Tarjeta de Crédito',
-                savedMethod: paymentMethods.any((m) => m.type == PaymentType.creditCard)
-                    ? paymentMethods.firstWhere((m) => m.type == PaymentType.creditCard)
-                    : null,
+                title: 'Tarjeta',
                 onTap: () => Navigator.pop(dialogContext, PaymentType.creditCard),
               ),
-              const SizedBox(height: 12),
-              _buildPaymentOption(
+              const SizedBox(height: 10),
+              _buildSimplePaymentOption(
                 dialogContext,
                 icon: Icons.paypal,
                 title: 'PayPal',
-                savedMethod: paymentMethods.any((m) => m.type == PaymentType.paypal)
-                    ? paymentMethods.firstWhere((m) => m.type == PaymentType.paypal)
-                    : null,
                 onTap: () => Navigator.pop(dialogContext, PaymentType.paypal),
               ),
-              const SizedBox(height: 12),
-              _buildPaymentOption(
+              const SizedBox(height: 10),
+              _buildSimplePaymentOption(
                 dialogContext,
                 icon: Icons.account_balance,
-                title: 'Transferencia Bancaria',
-                savedMethod: paymentMethods.any((m) => m.type == PaymentType.bankTransfer)
-                    ? paymentMethods.firstWhere((m) => m.type == PaymentType.bankTransfer)
-                    : null,
+                title: 'Transferencia',
                 onTap: () => Navigator.pop(dialogContext, PaymentType.bankTransfer),
               ),
             ],
@@ -579,11 +539,10 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     }
   }
 
-  Widget _buildPaymentOption(
+  Widget _buildSimplePaymentOption(
     BuildContext context, {
     required IconData icon,
     required String title,
-    PaymentMethod? savedMethod,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -591,36 +550,24 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          color: Colors.blue[50],
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue[200]!),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 32, color: Colors.blue[700]),
+            Icon(icon, size: 28, color: Colors.blue[700]),
             const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (savedMethod != null)
-                    Text(
-                      savedMethod.name,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                ],
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16),
+            Icon(Icons.chevron_right, color: Colors.blue[700]),
           ],
         ),
       ),
@@ -628,80 +575,29 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   }
 
   Future<void> _processPayment(PaymentType paymentType, DateTime date, String time, int duration) async {
-    print('ERROR HERE - processPayment started');
-    if (!mounted) {
-      print('ERROR HERE - not mounted at start');
-      return;
-    }
+    if (!mounted) return;
 
-    // Guardar el contexto del scaffold antes de operaciones async
-    final scaffoldContext = context;
-
-    // Mostrar dialog de procesamiento
-    print('ERROR HERE - showing loading dialog');
-    showDialog(
-      context: scaffoldContext,
-      barrierDismissible: false,
-      builder: (loadingContext) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-
+    // Guardar el appointment directamente
     try {
-      // Simular procesamiento de pago
-      print('ERROR HERE - simulating payment processing');
-      await Future.delayed(const Duration(seconds: 2));
-      print('ERROR HERE - payment processing completed');
-
-      if (!mounted) {
-        print('ERROR HERE - not mounted after delay');
-        return;
-      }
-
-      // Cerrar loading dialog
-      print('ERROR HERE - closing loading dialog');
-      Navigator.of(scaffoldContext).pop();
-      print('ERROR HERE - loading dialog closed');
-
-      if (!mounted) {
-        print('ERROR HERE - not mounted after closing loading');
-        return;
-      }
-
-      // Procesar el appointment directamente sin dialog adicional
-      print('ERROR HERE - about to book appointment');
-      print('ERROR HERE - mounted before booking: $mounted');
-
-      if (!mounted) {
-        print('ERROR HERE - not mounted before booking');
-        return;
-      }
-
-      // Llamar directamente a bookAppointment
       await _bookAppointment(date, time, duration, paymentType);
-      print('ERROR HERE - bookAppointment completed');
 
-      if (!mounted) {
-        print('ERROR HERE - not mounted after booking');
-        return;
-      }
+      if (!mounted) return;
 
-      // Mostrar confirmación DESPUÉS de guardar exitosamente
-      print('ERROR HERE - showing success confirmation dialog');
+      // Mostrar confirmación simple
       await showDialog<void>(
-        context: scaffoldContext,
+        context: context,
         barrierDismissible: false,
-        builder: (confirmContext) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
           title: const Text('¡Cita Agendada!'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Tu cita ha sido agendada exitosamente.',
+                'Tu cita ha sido reservada exitosamente.',
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               Text(
                 'Fecha: ${_getDateString(date)}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -710,30 +606,30 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                 'Hora: $time',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Duración: $duration ${duration == 1 ? 'hora' : 'horas'}',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
             ],
           ),
           actions: [
             ElevatedButton(
-              onPressed: () {
-                print('ERROR HERE - aceptar button pressed');
-                Navigator.of(confirmContext).pop();
-                print('ERROR HERE - success dialog closed');
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Aceptar'),
             ),
           ],
         ),
       );
-
-      print('ERROR HERE - all done!');
     } catch (e) {
-      print('ERROR HERE - caught exception: $e');
       if (!mounted) return;
-      Navigator.of(scaffoldContext).pop(); // Cerrar loading si hay error
-      if (!mounted) return;
-      ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al procesar el pago: $e'),
+          content: Text('Error al agendar la cita: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -752,74 +648,26 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   }
 
   Future<void> _bookAppointment(DateTime date, String time, int duration, PaymentType paymentType) async {
-    print('ERROR HERE - bookAppointment started');
-    print('ERROR HERE - mounted at start: $mounted');
-
     final user = _auth.currentUser;
-    if (user == null) {
-      print('ERROR HERE - user is null');
-      return;
-    }
+    if (user == null) return;
 
-    print('ERROR HERE - user is ${user.uid}');
-    print('ERROR HERE - doctor.id is ${widget.doctor.id}');
-    print('ERROR HERE - date: $date, time: $time, duration: $duration');
+    final appointment = Appointment(
+      id: '',
+      doctorId: widget.doctor.id,
+      patientId: user.uid,
+      date: date,
+      startTime: time,
+      durationHours: duration,
+      price: widget.doctor.pricePerAppointment * duration,
+      paymentMethod: paymentType.toString().split('.').last,
+    );
 
-    try {
-      print('ERROR HERE - creating appointment object');
-      final appointment = Appointment(
-        id: '',
-        doctorId: widget.doctor.id,
-        patientId: user.uid,
-        date: date,
-        startTime: time,
-        durationHours: duration,
-        price: widget.doctor.pricePerAppointment * duration,
-        paymentMethod: paymentType.toString().split('.').last,
-      );
+    await _firestore.collection('appointments').add(appointment.toMap());
 
-      print('ERROR HERE - appointment map: ${appointment.toMap()}');
-      print('ERROR HERE - adding appointment to Firestore');
+    if (!mounted) return;
 
-      final docRef = await _firestore.collection('appointments').add(appointment.toMap());
-
-      print('ERROR HERE - appointment added to Firestore successfully with ID: ${docRef.id}');
-      print('ERROR HERE - mounted after Firestore add: $mounted');
-
-      if (!mounted) {
-        print('ERROR HERE - not mounted after Firestore add, returning early');
-        return;
-      }
-
-      print('ERROR HERE - showing success snackbar');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Cita agendada exitosamente!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      print('ERROR HERE - snackbar shown');
-
-      // Recargar disponibilidad
-      print('ERROR HERE - reloading availability');
-      await _loadAvailability();
-      print('ERROR HERE - availability reloaded');
-    } catch (e, stackTrace) {
-      print('ERROR HERE - bookAppointment exception: $e');
-      print('ERROR HERE - stackTrace: $stackTrace');
-      if (!mounted) {
-        print('ERROR HERE - not mounted in catch block');
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al agendar cita: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    // Recargar disponibilidad
+    await _loadAvailability();
   }
 
   String _getDateString(DateTime date) {
