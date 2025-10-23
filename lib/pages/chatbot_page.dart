@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'services/chatgpt_service.dart';
+import '../services/chatgpt_service.dart';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});

@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Dr. Carlos Mendoza",
+    "title": "Especialista en Neumología",
+    "specialty": "Neumología",
+    "description": "Especialista en enfermedades respiratorias con más de 15 años de experiencia. Experto en el tratamiento de asma, EPOC, fibrosis pulmonar y otras afecciones respiratorias. Certificado por la junta médica nacional y miembro activo de la Sociedad de Neumología.",
+    "pricePerAppointment": 75.00,
+    "profileImageUrl": null,
+    "rating": 4.8,
+    "reviewCount": 127
+  },
+  {
+    "name": "Dra. María Rodríguez",
+    "title": "Especialista en Neumología Pediátrica",
+    "specialty": "Neumología",
+    "description": "Neumóloga pediátrica con 10 años de experiencia en el tratamiento de enfermedades respiratorias en niños y adolescentes. Especializada en asma infantil, bronquitis y apnea del sueño. Dedicada al cuidado compasivo de los más pequeños.",
+    "pricePerAppointment": 80.00,
+    "profileImageUrl": null,
+    "rating": 4.9,
+    "reviewCount": 156
+  },
+  {
+    "name": "Dr. Jorge Fernández",
+    "title": "Cardiólogo Intervencionista",
+    "specialty": "Cardiología",
+    "description": "Cardiólogo con especialización en procedimientos intervencionistas. Más de 12 años de experiencia en el diagnóstico y tratamiento de enfermedades cardiovasculares. Experto en cateterismo cardíaco, angioplastia y manejo de hipertensión arterial.",
+    "pricePerAppointment": 90.00,
+    "profileImageUrl": null,
+    "rating": 4.7,
+    "reviewCount": 98
+  },
+  {
+    "name": "Dra. Ana Patricia Gómez",
+    "title": "Cardióloga Clínica",
+    "specialty": "Cardiología",
+    "description": "Especialista en cardiología clínica con enfoque en prevención cardiovascular y rehabilitación cardíaca. Amplia experiencia en el manejo de pacientes con insuficiencia cardíaca, arritmias y enfermedades coronarias. Comprometida con la salud integral del paciente.",
+    "pricePerAppointment": 85.00,
+    "profileImageUrl": null,
+    "rating": 4.9,
+    "reviewCount": 142
+  },
+  {
+    "name": "Dr. Roberto Sánchez",
+    "title": "Médico General",
+    "specialty": "Medicina General",
+    "description": "Médico general con 8 años de experiencia en atención primaria. Brinda atención integral para toda la familia, desde consultas preventivas hasta el manejo de enfermedades agudas y crónicas. Enfoque humanizado en la medicina familiar.",
+    "pricePerAppointment": 50.00,
+    "profileImageUrl": null,
+    "rating": 4.6,
+    "reviewCount": 215
+  },
+  {
+    "name": "Dra. Laura Martínez",
+    "title": "Médica General y Medicina Interna",
+    "specialty": "Medicina General",
+    "description": "Médica general con subespecialidad en medicina interna. Experiencia de 6 años en el diagnóstico y tratamiento de enfermedades complejas. Atención personalizada enfocada en la prevención y el bienestar integral del paciente adulto.",
+    "pricePerAppointment": 55.00,
+    "profileImageUrl": null,
+    "rating": 4.7,
+    "reviewCount": 183
+  },
+  {
+    "name": "Dr. Pedro Ramírez",
+    "title": "Pediatra Certificado",
+    "specialty": "Pediatría",
+    "description": "Pediatra con 14 años de experiencia en el cuidado de niños desde el nacimiento hasta la adolescencia. Especializado en desarrollo infantil, vacunación y enfermedades comunes de la infancia. Ambiente cálido y amigable para los niños.",
+    "pricePerAppointment": 60.00,
+    "profileImageUrl": null,
+    "rating": 4.9,
+    "reviewCount": 267
+  },
+  {
+    "name": "Dra. Sofía Hernández",
+    "title": "Pediatra y Neonatóloga",
+    "specialty": "Pediatría",
+    "description": "Pediatra con especialización en neonatología. 11 años de experiencia en el cuidado de recién nacidos y lactantes. Experta en seguimiento del neurodesarrollo, lactancia materna y cuidados del bebé prematuro. Atención dedicada y comprensiva.",
+    "pricePerAppointment": 70.00,
+    "profileImageUrl": null,
+    "rating": 5.0,
+    "reviewCount": 194
+  },
+  {
+    "name": "Dr. Luis Alberto Torres",
+    "title": "Neumólogo Intensivista",
+    "specialty": "Neumología",
+    "description": "Neumólogo con doble especialización en medicina crítica. 13 años de experiencia en el manejo de enfermedades respiratorias graves y crónicas. Experto en ventilación mecánica, manejo de pacientes con COVID-19 y rehabilitación pulmonar.",
+    "pricePerAppointment": 95.00,
+    "profileImageUrl": null,
+    "rating": 4.8,
+    "reviewCount": 89
+  },
+  {
+    "name": "Dra. Carmen Ruiz",
+    "title": "Cardióloga Preventiva",
+    "specialty": "Cardiología",
+    "description": "Cardióloga enfocada en medicina preventiva y rehabilitación cardiovascular. 9 años de experiencia ayudando a pacientes a prevenir enfermedades del corazón mediante cambios en el estilo de vida. Especialista en manejo de diabetes y colesterol alto.",
+    "pricePerAppointment": 75.00,
+    "profileImageUrl": null,
+    "rating": 4.8,
+    "reviewCount": 134
+  }
+]

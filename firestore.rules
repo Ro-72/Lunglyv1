@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /patient_profiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /treatments/{treatmentId} {
+      // Permitir lectura si el usuario autenticado es el dueño del tratamiento
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Permitir creación si el usuario autenticado coincide con el userId en los datos
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      // Permitir actualización y eliminación si el usuario autenticado es el dueño
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    match /doctors/{doctorId} {
+      // Todos los usuarios autenticados pueden ver los médicos
+      allow read: if request.auth != null;
+
+      // Permitir crear, actualizar o eliminar médicos (para pruebas)
+      // TODO: En producción, restringir solo a administradores
+      allow write: if request.auth != null;
+    }
+  
+    match /appointments/{appointmentId} {
+      // Permitir lectura a todos los usuarios autenticados
+      // Esto es necesario para ver la disponibilidad de los doctores
+      allow read: if request.auth != null;
+
+      // Permitir crear cita si el usuario autenticado es el paciente
+      // y los datos requeridos están presentes
+      allow create: if request.auth != null &&
+        request.resource.data.patientId == request.auth.uid &&
+        request.resource.data.doctorId is string &&
+        request.resource.data.date is timestamp &&
+        request.resource.data.startTime is string &&
+        request.resource.data.durationHours is number &&
+        request.resource.data.durationHours > 0 &&
+        request.resource.data.price is number &&
+        request.resource.data.price >= 0;
+
+      // Permitir actualización si es el paciente o el doctor
+      // pero no se puede cambiar el patientId
+      allow update: if request.auth != null &&
+        (resource.data.patientId == request.auth.uid ||
+         resource.data.doctorId == request.auth.uid) &&
+        request.resource.data.patientId == resource.data.patientId;
+
+      // Solo el paciente puede cancelar su cita
+      allow delete: if request.auth != null &&
+        resource.data.patientId == request.auth.uid;
+    }
+
+    match /payment_methods/{methodId} {
+      // Los usuarios solo pueden leer sus propios métodos de pago
+      allow read: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+
+      // Los usuarios solo pueden crear métodos de pago para sí mismos
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.type is string &&
+        request.resource.data.name is string &&
+        request.resource.data.details is map;
+
+      // Los usuarios solo pueden actualizar sus propios métodos de pago
+      // y no pueden cambiar el userId
+      allow update: if request.auth != null &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Los usuarios solo pueden eliminar sus propios métodos de pago
+      allow delete: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+    }
+  }
+}
