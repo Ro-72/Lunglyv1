@@ -19,17 +19,17 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_emailController.text.isEmpty || 
         _passwordController.text.isEmpty || 
         _confirmPasswordController.text.isEmpty) {
-      _showError('Please fill in all fields');
+      _showError('Por favor, rellena todos los campos');
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showError('Passwords do not match');
+      _showError('Las contraseñas no coinciden');
       return;
     }
 
     if (_passwordController.text.length < 6) {
-      _showError('Password must be at least 6 characters');
+      _showError('La contraseña debe tener al menos 6 caracteres');
       return;
     }
 
@@ -62,7 +62,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register'),
+        title: const Text('Registrarse'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -81,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
             TextField(
               controller: _passwordController,
               decoration: const InputDecoration(
-                labelText: 'Password',
+                labelText: 'Contraseña',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -90,7 +90,7 @@ class _RegisterPageState extends State<RegisterPage> {
             TextField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
-                labelText: 'Confirm Password',
+                labelText: 'Confirmar Contraseña',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -102,7 +102,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 onPressed: _isLoading ? null : _register,
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('Register'),
+                    : const Text('Registrarse'),
               ),
             ),
           ],

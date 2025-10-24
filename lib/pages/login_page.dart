@@ -17,7 +17,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _signIn() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showError('Please fill in all fields');
+      _showError('Por favor, rellena todos los campos');
       return;
     }
 
@@ -49,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: const Text('Iniciar Sesión'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -68,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
             TextField(
               controller: _passwordController,
               decoration: const InputDecoration(
-                labelText: 'Password',
+                labelText: 'Contraseña',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -80,7 +80,7 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: _isLoading ? null : _signIn,
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('Login'),
+                    : const Text('Iniciar Sesión'),
               ),
             ),
             const SizedBox(height: 16),
@@ -91,7 +91,7 @@ class _LoginPageState extends State<LoginPage> {
                   MaterialPageRoute(builder: (context) => const RegisterPage()),
                 );
               },
-              child: const Text('Don\'t have an account? Register here'),
+              child: const Text('¿No tienes una cuenta? Regístrate'),
             ),
           ],
         ),
