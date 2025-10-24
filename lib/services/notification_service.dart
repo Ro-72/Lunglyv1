@@ -20,7 +20,7 @@ class NotificationService {
 
     // Configuración para Android
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     // Configuración para iOS
     const DarwinInitializationSettings iosSettings =
@@ -89,7 +89,7 @@ class NotificationService {
       channelDescription: 'Notificaciones de tratamientos médicos',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/launcher_icon',
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
@@ -127,7 +127,7 @@ class NotificationService {
       channelDescription: 'Recordatorios para tomar medicamentos',
       importance: Importance.max,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/launcher_icon',
       sound: RawResourceAndroidNotificationSound('notification'),
     );
 
