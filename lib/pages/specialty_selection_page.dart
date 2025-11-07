@@ -1,81 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
 import 'medico_page.dart';
+import '../models/specialist_answer.dart';
 
-class SpecialtySelectionPage extends StatelessWidget {
+class SpecialtySelectionPage extends StatefulWidget {
   const SpecialtySelectionPage({super.key});
+
+  @override
+  State<SpecialtySelectionPage> createState() => _SpecialtySelectionPageState();
+}
+
+class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
+  final PageController _pageController = PageController();
+  List<SpecialistAnswer> _specialistAnswers = [];
+  int _currentPage = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSpecialistAnswers();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSpecialistAnswers() async {
+    try {
+      final String jsonString = await rootBundle.loadString(
+        'assets/data/specialist_answers.json',
+      );
+      final List<dynamic> jsonData = json.decode(jsonString);
+      setState(() {
+        _specialistAnswers =
+            jsonData.map((item) => SpecialistAnswer.fromJson(item)).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buscar Doctor'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Container(
+          height: 42,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Buscar especialidades...',
+              hintStyle: const TextStyle(color: Colors.grey, fontSize: 15),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              suffixIcon: Icon(Icons.mic, color: Colors.grey[400]),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+            ),
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner superior con búsqueda
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    Colors.white,
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Encuentra Doctores',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Selecciona una especialidad',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Barra de búsqueda
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.search, color: Colors.grey),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Buscar especialidades...',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        Icon(Icons.mic, color: Colors.grey[400]),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
+            // Banner superior
             const SizedBox(height: 20),
 
             // Sección de Respuestas de Especialistas
@@ -92,8 +101,8 @@ class SpecialtySelectionPage extends StatelessWidget {
                   Text(
                     'Buscar Doctor por Especialidad',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Grid de especialidades
@@ -246,13 +255,12 @@ class SpecialtySelectionPage extends StatelessWidget {
             children: [
               Text(
                 'Respuestas de especialistas',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               TextButton.icon(
                 onPressed: () {
-                  // Acción para agregar comentario
                   _showAddCommentDialog(context);
                 },
                 icon: const Icon(Icons.add_comment, size: 20),
@@ -264,75 +272,278 @@ class SpecialtySelectionPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Card de ejemplo de pregunta
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Hola el ovulo ginothyl tiene cositas blancas adentro, es normal?',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+
+          // Carrusel de preguntas y respuestas
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_specialistAnswers.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Text('No hay respuestas disponibles'),
+              ),
+            )
+          else
+            Column(
+              children: [
+                SizedBox(
+                  height: 290,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemCount: _specialistAnswers.length,
+                    itemBuilder: (context, index) {
+                      final answer = _specialistAnswers[index];
+                      return _buildAnswerCard(answer);
+                    },
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'RESPUESTA DEL PROFESIONAL:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.blue[100],
-                        child: const Icon(Icons.person, size: 20),
+                ),
+                const SizedBox(height: 12),
+                // Indicadores de página
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    _specialistAnswers.length,
+                    (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentPage == index ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color:
+                            _currentPage == index
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Dra. Mirkell Marrufo Peralta',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              'Hola, el Ginothyl es policesuleno, ayuda a regenerar y cauterizar lesiones inflamatorias...',
-                              style: TextStyle(fontSize: 13),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnswerCard(SpecialistAnswer answer) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Pregunta del paciente
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundImage: AssetImage(answer.patientPhoto),
+                  backgroundColor: Colors.blue[100],
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        answer.patientName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
                         ),
+                      ),
+                      Text(
+                        answer.date,
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: const Text('Ver más'),
-                    ),
-                  ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              answer.question,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'RESPUESTA DEL PROFESIONAL:',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            // Respuesta del doctor
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundImage: AssetImage(answer.doctorPhoto),
+                  backgroundColor: Colors.green[100],
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        answer.doctorName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        answer.doctorSpecialty,
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              answer.answer,
+              style: const TextStyle(fontSize: 12),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _showFullAnswerDialog(answer),
+                child: const Text('Ver más', style: TextStyle(fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _showFullAnswerDialog(SpecialistAnswer answer) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          contentPadding: const EdgeInsets.all(20),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundImage: AssetImage(answer.patientPhoto),
+                      backgroundColor: Colors.blue[100],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            answer.patientName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            answer.date,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  answer.question,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                const Text(
+                  'RESPUESTA DEL PROFESIONAL:',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundImage: AssetImage(answer.doctorPhoto),
+                      backgroundColor: Colors.green[100],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            answer.doctorName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            answer.doctorSpecialty,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(answer.answer, style: const TextStyle(fontSize: 14)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -345,16 +556,17 @@ class SpecialtySelectionPage extends StatelessWidget {
         children: [
           Text(
             'Opiniones más recientes',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           // Opinión 1
           _buildOpinionCard(
             context,
             name: 'Víctor Valdivia Calderón',
-            opinion: 'A mi Madre le gusto mucho la experiencia, explicación detallada',
+            opinion:
+                'A mi Madre le gusto mucho la experiencia, explicación detallada',
             author: 'Marco Precilla',
             rating: 5,
           ),
@@ -363,7 +575,8 @@ class SpecialtySelectionPage extends StatelessWidget {
           _buildOpinionCard(
             context,
             name: 'Jorge Antonio Delgado Castillo',
-            opinion: 'Mientras atendía a mi hijo me dijo, yo soy cojito, y no permito que un niño se quede sin caminar...',
+            opinion:
+                'Mientras atendía a mi hijo me dijo, yo soy cojito, y no permito que un niño se quede sin caminar...',
             author: 'mcaa',
             rating: 5,
           ),
@@ -372,7 +585,8 @@ class SpecialtySelectionPage extends StatelessWidget {
           _buildOpinionCard(
             context,
             name: 'Amanda Rivera Bustamante',
-            opinion: 'Es todo lo que esperas de una consulta, un especialista que escuche y se tome el tiempo necesario...',
+            opinion:
+                'Es todo lo que esperas de una consulta, un especialista que escuche y se tome el tiempo necesario...',
             author: 'Licero',
             rating: 5,
           ),
@@ -508,9 +722,7 @@ class SpecialtySelectionPage extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MedicoPage(
-              selectedSpecialty: specialty,
-            ),
+            builder: (context) => MedicoPage(selectedSpecialty: specialty),
           ),
         );
       },
@@ -527,11 +739,7 @@ class SpecialtySelectionPage extends StatelessWidget {
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 28,
-                  color: color,
-                ),
+                child: Icon(icon, size: 28, color: color),
               ),
               const SizedBox(height: 6),
               Flexible(

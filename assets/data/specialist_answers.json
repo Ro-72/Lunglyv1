@@ -1,0 +1,68 @@
+[
+  {
+    "id": "1",
+    "patientName": "Ana María López",
+    "patientPhoto": "assets/photos/0868a03e801b077b8cdfa5b164fe2a08_medium_square.jpg",
+    "question": "Hola, el óvulo ginothyl tiene cositas blancas adentro, es normal?",
+    "doctorName": "Dra. Mirkell Marrufo Peralta",
+    "doctorPhoto": "assets/photos/32d4f7b7-5d21-4250-973c-1f621051c500_medium_square.jpg",
+    "doctorSpecialty": "Ginecología",
+    "answer": "Hola, el Ginothyl es policesuleno, ayuda a regenerar y cauterizar lesiones inflamatorias. Las partículas blancas son normales, son componentes del medicamento que ayudan en el proceso de curación. No te preocupes, es completamente seguro.",
+    "date": "Hace 2 días"
+  },
+  {
+    "id": "2",
+    "patientName": "Carlos Mendoza",
+    "patientPhoto": "assets/photos/976f14d7-bda9-41e1-94dc-89b4f5f14efa_medium_square.jpg",
+    "question": "Tengo tos seca persistente desde hace una semana, ¿debería preocuparme?",
+    "doctorName": "Dr. Roberto Silva",
+    "doctorPhoto": "assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5.jpeg",
+    "doctorSpecialty": "Neumología",
+    "answer": "La tos seca persistente puede tener varias causas. Te recomiendo mantener buena hidratación y evitar irritantes como el humo. Si persiste más de dos semanas o se acompaña de fiebre, es importante que agendes una consulta presencial para evaluación completa.",
+    "date": "Hace 5 días"
+  },
+  {
+    "id": "3",
+    "patientName": "María González",
+    "patientPhoto": "assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5_140_square.jpg",
+    "question": "Mi hijo de 5 años tiene fiebre de 38.5°C, ¿qué puedo darle?",
+    "doctorName": "Dr. Pedro Ramírez",
+    "doctorPhoto": "assets/photos/0868a03e801b077b8cdfa5b164fe2a08_medium_square.jpg",
+    "doctorSpecialty": "Pediatría",
+    "answer": "Para un niño de 5 años con fiebre de 38.5°C, puedes administrar paracetamol según su peso (10-15mg/kg cada 6 horas). Mantén buena hidratación y baños tibios. Si la fiebre persiste más de 48 horas o supera los 39°C, consulta inmediatamente.",
+    "date": "Hace 1 semana"
+  },
+  {
+    "id": "4",
+    "patientName": "Jorge Valdez",
+    "patientPhoto": "assets/photos/32d4f7b7-5d21-4250-973c-1f621051c500_medium_square.jpg",
+    "question": "Me duele el pecho al respirar profundo, ¿es grave?",
+    "doctorName": "Dra. Carmen Flores",
+    "doctorPhoto": "assets/photos/976f14d7-bda9-41e1-94dc-89b4f5f14efa_medium_square.jpg",
+    "doctorSpecialty": "Cardiología",
+    "answer": "El dolor torácico al respirar puede indicar varias condiciones. Si es agudo y localizado, podría ser muscular o pleural. Sin embargo, cualquier dolor de pecho requiere evaluación médica urgente para descartar problemas cardíacos. Te recomiendo acudir a urgencias si el dolor es intenso.",
+    "date": "Hace 3 días"
+  },
+  {
+    "id": "5",
+    "patientName": "Patricia Morales",
+    "patientPhoto": "assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5.jpeg",
+    "question": "Tengo manchas rojas en la piel que pican mucho, ¿qué puede ser?",
+    "doctorName": "Dr. Luis Martínez",
+    "doctorPhoto": "assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5_140_square.jpg",
+    "doctorSpecialty": "Dermatología",
+    "answer": "Las manchas rojas con picor pueden ser una reacción alérgica, urticaria o dermatitis de contacto. Te recomiendo aplicar compresas frías y evitar rascarte. Si es posible, identifica si tuviste contacto con algún producto nuevo. Agenda una consulta para examinar las lesiones y prescribir tratamiento adecuado.",
+    "date": "Hace 4 días"
+  },
+  {
+    "id": "6",
+    "patientName": "Roberto Cruz",
+    "patientPhoto": "assets/photos/0868a03e801b077b8cdfa5b164fe2a08_medium_square.jpg",
+    "question": "Tengo mareos frecuentes y me siento muy cansado, ¿qué me recomiendan?",
+    "doctorName": "Dra. Sandra Torres",
+    "doctorPhoto": "assets/photos/32d4f7b7-5d21-4250-973c-1f621051c500_medium_square.jpg",
+    "doctorSpecialty": "Medicina General",
+    "answer": "Los mareos y fatiga pueden tener múltiples causas: anemia, problemas de presión arterial, deshidratación o alteraciones metabólicas. Es importante realizar análisis de sangre completos y revisar tus signos vitales. Mientras tanto, mantente bien hidratado y evita movimientos bruscos.",
+    "date": "Hace 1 día"
+  }
+]

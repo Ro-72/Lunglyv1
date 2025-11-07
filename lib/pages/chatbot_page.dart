@@ -85,10 +85,17 @@ class _ChatbotPageState extends State<ChatbotPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.medical_services_outlined,
-            size: 64,
-            color: Colors.grey[400],
+          Image.asset(
+            'assets/icons/robot.png',
+            width: 120,
+            height: 120,
+            errorBuilder: (context, error, stackTrace) {
+              return Icon(
+                Icons.medical_services_outlined,
+                size: 64,
+                color: Colors.grey[400],
+              );
+            },
           ),
           const SizedBox(height: 16),
           Text(

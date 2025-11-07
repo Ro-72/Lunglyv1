@@ -25,8 +25,34 @@ class MyAppointmentsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Citas'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Container(
+          height: 42,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Buscar citas...',
+              hintStyle: const TextStyle(color: Colors.grey, fontSize: 15),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              suffixIcon: Icon(Icons.filter_list, color: Colors.grey[400]),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+            ),
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

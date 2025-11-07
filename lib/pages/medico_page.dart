@@ -17,8 +17,7 @@ class _MedicoPageState extends State<MedicoPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedExperience = 'Todos';
-  String _selectedLanguage = 'Todos';
+  String _selectedLocation = 'Todos';
   late String _selectedSpecialty;
 
   @override
@@ -46,208 +45,231 @@ class _MedicoPageState extends State<MedicoPage> {
   List<Doctor> _filterDoctors(List<Doctor> doctors) {
     return doctors.where((doctor) {
       // Filtro de búsqueda
-      final matchesSearch = _searchQuery.isEmpty ||
+      final matchesSearch =
+          _searchQuery.isEmpty ||
           doctor.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           doctor.hospital.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           doctor.city.toLowerCase().contains(_searchQuery.toLowerCase());
 
       // Filtro de especialidad
-      final matchesSpecialty = _selectedSpecialty == 'Todos' ||
+      final matchesSpecialty =
+          _selectedSpecialty == 'Todos' ||
           doctor.specialty == _selectedSpecialty;
 
-      // Filtro de experiencia
-      final matchesExperience = _selectedExperience == 'Todos' ||
-          (_selectedExperience == '5-10 años' && doctor.yearsExperience >= 5 && doctor.yearsExperience <= 10) ||
-          (_selectedExperience == '10-15 años' && doctor.yearsExperience >= 10 && doctor.yearsExperience <= 15) ||
-          (_selectedExperience == '15+ años' && doctor.yearsExperience > 15);
+      // Filtro de ubicación
+      final matchesLocation =
+          _selectedLocation == 'Todos' ||
+          doctor.city.toLowerCase().contains(_selectedLocation.toLowerCase());
 
-      // Filtro de idioma
-      final matchesLanguage = _selectedLanguage == 'Todos' ||
-          doctor.languages.contains(_selectedLanguage);
-
-      return matchesSearch && matchesSpecialty && matchesExperience && matchesLanguage;
+      return matchesSearch && matchesSpecialty && matchesLocation;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Search Bar
-        Container(
-          padding: const EdgeInsets.all(16),
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
-          child: Column(
-            children: [
-              TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Buscar médico, hospital o ciudad...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Container(
+          height: 42,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Buscar médicos...',
+              hintStyle: const TextStyle(color: Colors.grey, fontSize: 15),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              suffixIcon: Icon(Icons.filter_list, color: Colors.grey[400]),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
               ),
-              const SizedBox(height: 12),
-              // Filters Row
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip(
-                      label: 'Especialidad',
-                      value: _selectedSpecialty,
-                      options: [
-                        'Todos',
-                        'Medicina General',
-                        'Dermatología',
-                        'Psiquiatría',
-                        'Otorrinolaringología',
-                        'Ginecología',
-                        'Cardiología',
-                        'Neumología',
-                        'Pediatría',
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedSpecialty = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildFilterChip(
-                      label: 'Experiencia',
-                      value: _selectedExperience,
-                      options: ['Todos', '5-10 años', '10-15 años', '15+ años'],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedExperience = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildFilterChip(
-                      label: 'Idioma',
-                      value: _selectedLanguage,
-                      options: ['Todos', 'Español', 'Inglés', 'Hindi', 'Árabe'],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedLanguage = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-        // Doctor Cards List with StreamBuilder
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: _firestore.collection('doctors').snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error al cargar médicos',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              final doctors = snapshot.data?.docs
-                  .map((doc) => Doctor.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-                  .toList() ?? [];
-
-              final filteredDoctors = _filterDoctors(doctors);
-
-              return Column(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          // Filters Row
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
-                  // Results Header
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _selectedSpecialty == 'Todos'
-                                ? 'Médicos Disponibles'
-                                : '$_selectedSpecialty - Disponibles',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ),
-                        Text(
-                          '${filteredDoctors.length} médicos',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                      ],
-                    ),
+                  _buildFilterChip(
+                    label: 'Especialidad',
+                    value: _selectedSpecialty,
+                    options: [
+                      'Todos',
+                      'Medicina General',
+                      'Dermatología',
+                      'Psiquiatría',
+                      'Otorrinolaringología',
+                      'Ginecología',
+                      'Cardiología',
+                      'Neumología',
+                      'Pediatría',
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSpecialty = value;
+                      });
+                    },
                   ),
-                  // Doctor Cards
-                  Expanded(
-                    child: filteredDoctors.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No se encontraron médicos',
-                                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: filteredDoctors.length,
-                            itemBuilder: (context, index) {
-                              return _buildDoctorCard(filteredDoctors[index]);
-                            },
-                          ),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                    label: 'Lugar',
+                    value: _selectedLocation,
+                    options: [
+                      'Todos',
+                      'Lima',
+                      'Arequipa',
+                      'Trujillo',
+                      'Chiclayo',
+                      'Cusco',
+                      'Piura',
+                      'Ica',
+                      'Tacna',
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedLocation = value;
+                      });
+                    },
                   ),
                 ],
-              );
-            },
+              ),
+            ),
           ),
-        ),
-      ],
+          // Doctor Cards List with StreamBuilder
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('doctors').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error al cargar médicos',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final doctors =
+                    snapshot.data?.docs
+                        .map(
+                          (doc) => Doctor.fromMap(
+                            doc.data() as Map<String, dynamic>,
+                            doc.id,
+                          ),
+                        )
+                        .toList() ??
+                    [];
+
+                final filteredDoctors = _filterDoctors(doctors);
+
+                return Column(
+                  children: [
+                    // Results Header
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedSpecialty == 'Todos'
+                                  ? 'Médicos Disponibles'
+                                  : '$_selectedSpecialty - Disponibles',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Text(
+                            '${filteredDoctors.length} médicos',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Doctor Cards
+                    Expanded(
+                      child:
+                          filteredDoctors.isEmpty
+                              ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.search_off,
+                                      size: 64,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No se encontraron médicos',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : ListView.builder(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                itemCount: filteredDoctors.length,
+                                itemBuilder: (context, index) {
+                                  return _buildDoctorCard(
+                                    filteredDoctors[index],
+                                  );
+                                },
+                              ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -265,7 +287,10 @@ class _MedicoPageState extends State<MedicoPage> {
             Text(
               value == 'Todos' ? label : value,
               style: TextStyle(
-                color: value != 'Todos' ? Theme.of(context).colorScheme.primary : null,
+                color:
+                    value != 'Todos'
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
                 fontWeight: value != 'Todos' ? FontWeight.bold : null,
               ),
             ),
@@ -273,17 +298,15 @@ class _MedicoPageState extends State<MedicoPage> {
             const Icon(Icons.arrow_drop_down, size: 18),
           ],
         ),
-        backgroundColor: value != 'Todos'
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-            : Colors.white,
+        backgroundColor:
+            value != 'Todos'
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                : Colors.white,
       ),
       onSelected: onChanged,
       itemBuilder: (context) {
         return options.map((option) {
-          return PopupMenuItem<String>(
-            value: option,
-            child: Text(option),
-          );
+          return PopupMenuItem<String>(value: option, child: Text(option));
         }).toList();
       },
     );
@@ -294,9 +317,7 @@ class _MedicoPageState extends State<MedicoPage> {
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),
       color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -315,28 +336,42 @@ class _MedicoPageState extends State<MedicoPage> {
                         color: Colors.grey[200],
                       ),
                       child: ClipOval(
-                        child: doctor.profileImageUrl != null && doctor.profileImageUrl!.isNotEmpty
-                            ? Image.network(
-                                doctor.profileImageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  // Si falla la carga de la red, usar imagen por defecto
-                                  return Image.asset(
-                                    _getDefaultDoctorImage(doctor.id),
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Icon(Icons.person, size: 50, color: Colors.grey[400]);
-                                    },
-                                  );
-                                },
-                              )
-                            : Image.asset(
-                                _getDefaultDoctorImage(doctor.id),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(Icons.person, size: 50, color: Colors.grey[400]);
-                                },
-                              ),
+                        child:
+                            doctor.profileImageUrl != null &&
+                                    doctor.profileImageUrl!.isNotEmpty
+                                ? Image.network(
+                                  doctor.profileImageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // Si falla la carga de la red, usar imagen por defecto
+                                    return Image.asset(
+                                      _getDefaultDoctorImage(doctor.id),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: Colors.grey[400],
+                                        );
+                                      },
+                                    );
+                                  },
+                                )
+                                : Image.asset(
+                                  _getDefaultDoctorImage(doctor.id),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: Colors.grey[400],
+                                    );
+                                  },
+                                ),
                       ),
                     ),
                     if (doctor.isApolloDoctor)
@@ -345,7 +380,10 @@ class _MedicoPageState extends State<MedicoPage> {
                         left: 0,
                         right: 0,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 2,
+                            horizontal: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.lightBlue,
                             borderRadius: BorderRadius.circular(4),
@@ -382,10 +420,7 @@ class _MedicoPageState extends State<MedicoPage> {
                       // Specialty
                       Text(
                         doctor.specialty,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 6),
                       // Experience
@@ -401,10 +436,7 @@ class _MedicoPageState extends State<MedicoPage> {
                       // Qualifications
                       Text(
                         doctor.qualifications.join(', '),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -412,16 +444,17 @@ class _MedicoPageState extends State<MedicoPage> {
                       // Languages
                       Text(
                         doctor.languages.join(', '),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 6),
                       // Location
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                          Icon(
+                            Icons.location_on,
+                            size: 14,
+                            color: Colors.grey[600],
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${doctor.distanceKm.toStringAsFixed(0)} Km • ${doctor.city}',
@@ -436,17 +469,18 @@ class _MedicoPageState extends State<MedicoPage> {
                       // Hospital
                       Text(
                         doctor.hospital,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[400],
-                        ),
+                        style: TextStyle(fontSize: 11, color: Colors.grey[400]),
                       ),
                       const SizedBox(height: 6),
                       // Rating
                       if (doctor.rating > 0 && doctor.patientCount != null)
                         Row(
                           children: [
-                            const Icon(Icons.thumb_up, size: 14, color: Colors.green),
+                            const Icon(
+                              Icons.thumb_up,
+                              size: 14,
+                              color: Colors.green,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${(doctor.rating * 20).toStringAsFixed(0)}%',
@@ -490,7 +524,8 @@ class _MedicoPageState extends State<MedicoPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AppointmentBookingPage(doctor: doctor),
+                      builder:
+                          (context) => AppointmentBookingPage(doctor: doctor),
                     ),
                   );
                 },
@@ -519,9 +554,7 @@ class _MedicoPageState extends State<MedicoPage> {
                         ),
                         Text(
                           'Consulta de ${doctor.consultationMinutes} mins',
-                          style: const TextStyle(
-                            fontSize: 12,
-                          ),
+                          style: const TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
@@ -552,10 +585,7 @@ class _MedicoPageState extends State<MedicoPage> {
                 ),
                 child: const Text(
                   'Detalles',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

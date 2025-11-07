@@ -14,7 +14,8 @@ class AppointmentBookingPage extends StatefulWidget {
   State<AppointmentBookingPage> createState() => _AppointmentBookingPageState();
 }
 
-class _AppointmentBookingPageState extends State<AppointmentBookingPage> with SingleTickerProviderStateMixin {
+class _AppointmentBookingPageState extends State<AppointmentBookingPage>
+    with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -54,12 +55,13 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
   Future<void> _loadSlotsForDate(DateTime date, String key) async {
     final dateEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
-    final appointments = await _firestore
-        .collection('appointments')
-        .where('doctorId', isEqualTo: widget.doctor.id)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(date))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
-        .get();
+    final appointments =
+        await _firestore
+            .collection('appointments')
+            .where('doctorId', isEqualTo: widget.doctor.id)
+            .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(date))
+            .where('date', isLessThanOrEqualTo: Timestamp.fromDate(dateEnd))
+            .get();
 
     final bookedSlots = <String>{};
     for (var doc in appointments.docs) {
@@ -71,12 +73,19 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
     final slots = <String>[];
     for (int hour = 8; hour < 22; hour++) {
       for (int minute = 0; minute < 60; minute += 15) {
-        final timeStr = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+        final timeStr =
+            '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
         // Si es hoy, solo mostrar slots futuros
         if (key == 'today') {
           final now = DateTime.now();
-          final slotTime = DateTime(date.year, date.month, date.day, hour, minute);
+          final slotTime = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            hour,
+            minute,
+          );
           if (slotTime.isAfter(now) && !bookedSlots.contains(timeStr)) {
             slots.add(timeStr);
           }
@@ -107,47 +116,46 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Book Appointment'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Video Consultation Card
-                  _buildConsultationCard(
-                    icon: Icons.video_call,
-                    title: 'Consulta por Video',
-                    color: Colors.blue,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Clinic Appointment Card (solo si es doctor Apollo)
-                  if (widget.doctor.isApolloDoctor)
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Video Consultation Card
                     _buildConsultationCard(
-                      icon: Icons.local_hospital,
-                      title: 'Cita en Clínica',
-                      color: Colors.cyan,
+                      icon: Icons.video_call,
+                      title: 'Consulta',
+                      color: Colors.blue,
                     ),
+                    const SizedBox(height: 16),
 
-                  const SizedBox(height: 24),
+                    // Clinic Appointment Card (solo si es doctor Apollo)
+                    if (widget.doctor.isApolloDoctor)
+                      _buildConsultationCard(
+                        icon: Icons.local_hospital,
+                        title: 'Cita en Clínica',
+                        color: Colors.cyan,
+                      ),
 
-                  // Sección de Opiniones
-                  _buildOpinionsSection(),
+                    const SizedBox(height: 24),
 
-                  const SizedBox(height: 24),
+                    // Sección de Opiniones
+                    _buildOpinionsSection(),
 
-                  // Clinic Details (solo si es doctor Apollo)
-                  if (widget.doctor.isApolloDoctor)
-                    _buildClinicDetails(),
+                    const SizedBox(height: 24),
 
-                  const SizedBox(height: 32),
-                ],
+                    // Clinic Details (solo si es doctor Apollo)
+                    if (widget.doctor.isApolloDoctor) _buildClinicDetails(),
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
-            ),
     );
   }
 
@@ -178,9 +186,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[200]!),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
             ),
             child: Row(
               children: [
@@ -228,7 +234,10 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
                     const Text('Hoy'),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green[100],
                         borderRadius: BorderRadius.circular(12),
@@ -252,7 +261,10 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
                     const Text('Mañana'),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green[100],
                         borderRadius: BorderRadius.circular(12),
@@ -279,7 +291,10 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
               controller: _tabController,
               children: [
                 _buildTimeSlotsList(todaySlots, DateTime.now()),
-                _buildTimeSlotsList(tomorrowSlots, DateTime.now().add(const Duration(days: 1))),
+                _buildTimeSlotsList(
+                  tomorrowSlots,
+                  DateTime.now().add(const Duration(days: 1)),
+                ),
               ],
             ),
           ),
@@ -362,22 +377,21 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
         children: [
           const Text(
             'Opiniones de Pacientes',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           _buildOpinionCard(
             name: 'María González',
-            opinion: 'Excelente doctor! Muy profesional y atento. Se tomó el tiempo para explicar todo claramente.',
+            opinion:
+                'Excelente doctor! Muy profesional y atento. Se tomó el tiempo para explicar todo claramente.',
             rating: 5,
             date: 'Hace 2 días',
           ),
           const SizedBox(height: 12),
           _buildOpinionCard(
             name: 'Carlos Ramírez',
-            opinion: 'Gran experiencia. La consulta fue muy completa y el doctor muy conocedor.',
+            opinion:
+                'Gran experiencia. La consulta fue muy completa y el doctor muy conocedor.',
             rating: 5,
             date: 'Hace 1 semana',
           ),
@@ -500,10 +514,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
             padding: EdgeInsets.all(16),
             child: Text(
               'Detalles de la Clínica',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
 
@@ -518,11 +529,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
             child: Stack(
               children: [
                 Center(
-                  child: Icon(
-                    Icons.map,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
+                  child: Icon(Icons.map, size: 64, color: Colors.grey[400]),
                 ),
                 Positioned(
                   top: 12,
@@ -599,18 +606,12 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
                 const SizedBox(height: 8),
                 Text(
                   '${widget.doctor.city}, CA 90232, United States',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'Horarios',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -619,14 +620,14 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
                     const SizedBox(width: 8),
                     Text(
                       'Lun - Dom',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[800],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green[100],
                         borderRadius: BorderRadius.circular(12),
@@ -647,10 +648,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
                   padding: const EdgeInsets.only(left: 26),
                   child: Text(
                     '08:00 AM - 10:00 PM',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -738,7 +736,8 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
                 dialogContext,
                 icon: Icons.credit_card,
                 title: 'Tarjeta de Crédito',
-                onTap: () => Navigator.pop(dialogContext, PaymentType.creditCard),
+                onTap:
+                    () => Navigator.pop(dialogContext, PaymentType.creditCard),
               ),
               const SizedBox(height: 10),
               _buildPaymentOption(
@@ -752,7 +751,9 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
                 dialogContext,
                 icon: Icons.account_balance,
                 title: 'Transferencia Bancaria',
-                onTap: () => Navigator.pop(dialogContext, PaymentType.bankTransfer),
+                onTap:
+                    () =>
+                        Navigator.pop(dialogContext, PaymentType.bankTransfer),
               ),
             ],
           ),
@@ -806,7 +807,11 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
     );
   }
 
-  Future<void> _processPayment(PaymentType paymentType, DateTime date, String time) async {
+  Future<void> _processPayment(
+    PaymentType paymentType,
+    DateTime date,
+    String time,
+  ) async {
     try {
       await _bookAppointment(date, time, paymentType);
 
@@ -815,41 +820,46 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
-          title: const Text('¡Cita Agendada!'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Tu cita ha sido agendada exitosamente.',
-                textAlign: TextAlign.center,
+        builder:
+            (dialogContext) => AlertDialog(
+              icon: const Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 64,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Fecha: ${_getDateString(date)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              title: const Text('¡Cita Agendada!'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Tu cita ha sido agendada exitosamente.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Fecha: ${_getDateString(date)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Hora: $time',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
-              Text(
-                'Hora: $time',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Aceptar'),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Aceptar'),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -862,7 +872,11 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
     }
   }
 
-  Future<void> _bookAppointment(DateTime date, String time, PaymentType paymentType) async {
+  Future<void> _bookAppointment(
+    DateTime date,
+    String time,
+    PaymentType paymentType,
+  ) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
@@ -872,7 +886,8 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
       patientId: user.uid,
       date: date,
       startTime: time,
-      durationHours: 1, // Fixed 15-minute slots, pero guardamos como 1 hora para compatibilidad
+      durationHours:
+          1, // Fixed 15-minute slots, pero guardamos como 1 hora para compatibilidad
       price: widget.doctor.pricePerAppointment,
       paymentMethod: paymentType.toString().split('.').last,
     );
@@ -887,8 +902,18 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> with Si
 
   String _getDateString(DateTime date) {
     const months = [
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
     ];
     return '${date.day} de ${months[date.month - 1]}, ${date.year}';
   }
