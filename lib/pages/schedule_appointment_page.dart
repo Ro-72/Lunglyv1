@@ -5,7 +5,9 @@ import '../models/doctor.dart';
 import 'appointment_booking_page.dart';
 
 class ScheduleAppointmentPage extends StatefulWidget {
-  const ScheduleAppointmentPage({super.key});
+  final String? selectedSpecialty;
+
+  const ScheduleAppointmentPage({super.key, this.selectedSpecialty});
 
   @override
   State<ScheduleAppointmentPage> createState() => _ScheduleAppointmentPageState();
@@ -19,11 +21,30 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
   String _searchQuery = '';
   String? _selectedSpecialty;
 
+  // Lista de imágenes por defecto disponibles
+  final List<String> _defaultDoctorImages = [
+    'assets/photos/0868a03e801b077b8cdfa5b164fe2a08_medium_square.jpg',
+    'assets/photos/32d4f7b7-5d21-4250-973c-1f621051c500_medium_square.jpg',
+    'assets/photos/976f14d7-bda9-41e1-94dc-89b4f5f14efa_medium_square.jpg',
+    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5.jpeg',
+    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5_140_square.jpg',
+  ];
+
+  // Obtener imagen por defecto según el ID del doctor
+  String _getDefaultDoctorImage(String doctorId) {
+    final index = doctorId.hashCode.abs() % _defaultDoctorImages.length;
+    return _defaultDoctorImages[index];
+  }
+
   final List<String> _specialties = [
     'Todos',
-    'Neumología',
-    'Cardiología',
     'Medicina General',
+    'Dermatología',
+    'Psiquiatría',
+    'Otorrinolaringología',
+    'Ginecología',
+    'Cardiología',
+    'Neumología',
     'Pediatría',
   ];
 
@@ -31,6 +52,14 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
   void initState() {
     super.initState();
     _tabController = TabController(length: _specialties.length, vsync: this);
+
+    // Si se pasó una especialidad seleccionada, navegar a esa pestaña
+    if (widget.selectedSpecialty != null) {
+      final index = _specialties.indexOf(widget.selectedSpecialty!);
+      if (index != -1) {
+        _tabController.index = index;
+      }
+    }
   }
 
   @override
@@ -178,12 +207,10 @@ class _ScheduleAppointmentPageState extends State<ScheduleAppointmentPage> with 
           leading: CircleAvatar(
             radius: 30,
             backgroundColor: Colors.blue[100],
-            backgroundImage: doctor.profileImageUrl != null
+            backgroundImage: doctor.profileImageUrl != null && doctor.profileImageUrl!.isNotEmpty
                 ? NetworkImage(doctor.profileImageUrl!)
-                : null,
-            child: doctor.profileImageUrl == null
-                ? Icon(Icons.person, size: 30, color: Colors.blue[700])
-                : null,
+                : AssetImage(_getDefaultDoctorImage(doctor.id)),
+            child: null,
           ),
           title: Text(
             doctor.name,

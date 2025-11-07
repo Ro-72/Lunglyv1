@@ -5,7 +5,9 @@ import 'appointment_booking_page.dart';
 import 'doctor_detail_page.dart';
 
 class MedicoPage extends StatefulWidget {
-  const MedicoPage({super.key});
+  final String? selectedSpecialty;
+
+  const MedicoPage({super.key, this.selectedSpecialty});
 
   @override
   State<MedicoPage> createState() => _MedicoPageState();
@@ -17,6 +19,29 @@ class _MedicoPageState extends State<MedicoPage> {
   String _searchQuery = '';
   String _selectedExperience = 'Todos';
   String _selectedLanguage = 'Todos';
+  late String _selectedSpecialty;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar con la especialidad seleccionada o 'Todos'
+    _selectedSpecialty = widget.selectedSpecialty ?? 'Todos';
+  }
+
+  // Lista de imágenes por defecto disponibles
+  final List<String> _defaultDoctorImages = [
+    'assets/photos/0868a03e801b077b8cdfa5b164fe2a08_medium_square.jpg',
+    'assets/photos/32d4f7b7-5d21-4250-973c-1f621051c500_medium_square.jpg',
+    'assets/photos/976f14d7-bda9-41e1-94dc-89b4f5f14efa_medium_square.jpg',
+    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5.jpeg',
+    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5_140_square.jpg',
+  ];
+
+  // Obtener imagen por defecto según el ID del doctor
+  String _getDefaultDoctorImage(String doctorId) {
+    final index = doctorId.hashCode.abs() % _defaultDoctorImages.length;
+    return _defaultDoctorImages[index];
+  }
 
   List<Doctor> _filterDoctors(List<Doctor> doctors) {
     return doctors.where((doctor) {
@@ -25,6 +50,10 @@ class _MedicoPageState extends State<MedicoPage> {
           doctor.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           doctor.hospital.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           doctor.city.toLowerCase().contains(_searchQuery.toLowerCase());
+
+      // Filtro de especialidad
+      final matchesSpecialty = _selectedSpecialty == 'Todos' ||
+          doctor.specialty == _selectedSpecialty;
 
       // Filtro de experiencia
       final matchesExperience = _selectedExperience == 'Todos' ||
@@ -36,7 +65,7 @@ class _MedicoPageState extends State<MedicoPage> {
       final matchesLanguage = _selectedLanguage == 'Todos' ||
           doctor.languages.contains(_selectedLanguage);
 
-      return matchesSearch && matchesExperience && matchesLanguage;
+      return matchesSearch && matchesSpecialty && matchesExperience && matchesLanguage;
     }).toList();
   }
 
@@ -86,6 +115,27 @@ class _MedicoPageState extends State<MedicoPage> {
                 child: Row(
                   children: [
                     _buildFilterChip(
+                      label: 'Especialidad',
+                      value: _selectedSpecialty,
+                      options: [
+                        'Todos',
+                        'Medicina General',
+                        'Dermatología',
+                        'Psiquiatría',
+                        'Otorrinolaringología',
+                        'Ginecología',
+                        'Cardiología',
+                        'Neumología',
+                        'Pediatría',
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSpecialty = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
                       label: 'Experiencia',
                       value: _selectedExperience,
                       options: ['Todos', '5-10 años', '10-15 años', '15+ años'],
@@ -115,10 +165,7 @@ class _MedicoPageState extends State<MedicoPage> {
         // Doctor Cards List with StreamBuilder
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: _firestore
-                .collection('doctors')
-                .where('specialty', whereIn: ['Neumología', 'Neumología Pediátrica', 'Neumología Intervencionista'])
-                .snapshots(),
+            stream: _firestore.collection('doctors').snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -154,11 +201,15 @@ class _MedicoPageState extends State<MedicoPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Neumólogos Disponibles',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                        Expanded(
+                          child: Text(
+                            _selectedSpecialty == 'Todos'
+                                ? 'Médicos Disponibles'
+                                : '$_selectedSpecialty - Disponibles',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
                         ),
                         Text(
                           '${filteredDoctors.length} médicos',
@@ -264,15 +315,28 @@ class _MedicoPageState extends State<MedicoPage> {
                         color: Colors.grey[200],
                       ),
                       child: ClipOval(
-                        child: doctor.profileImageUrl != null
+                        child: doctor.profileImageUrl != null && doctor.profileImageUrl!.isNotEmpty
                             ? Image.network(
                                 doctor.profileImageUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return Icon(Icons.person, size: 50, color: Colors.grey[400]);
+                                  // Si falla la carga de la red, usar imagen por defecto
+                                  return Image.asset(
+                                    _getDefaultDoctorImage(doctor.id),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(Icons.person, size: 50, color: Colors.grey[400]);
+                                    },
+                                  );
                                 },
                               )
-                            : Icon(Icons.person, size: 50, color: Colors.grey[400]),
+                            : Image.asset(
+                                _getDefaultDoctorImage(doctor.id),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(Icons.person, size: 50, color: Colors.grey[400]);
+                                },
+                              ),
                       ),
                     ),
                     if (doctor.isApolloDoctor)

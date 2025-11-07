@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'schedule_appointment_page.dart';
+import 'specialty_selection_page.dart';
 import 'my_appointments_page.dart';
 import 'medical_history_page.dart';
 import 'prescriptions_page.dart';
@@ -89,7 +89,7 @@ class InicioPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ScheduleAppointmentPage(),
+                  builder: (context) => const SpecialtySelectionPage(),
                 ),
               );
             },
