@@ -55,27 +55,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Container(
-          height: 42,
-          margin: const EdgeInsets.only(right: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Buscar especialidades...',
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 15),
-              prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              suffixIcon: Icon(Icons.mic, color: Colors.grey[400]),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-            ),
-          ),
-        ),
+        title: const Text('Especialidades'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -104,71 +84,26 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Grid de especialidades
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.75,
+                  const SizedBox(height: 20),
+                  // Dos grandes bloques de especialidades
+                  Column(
                     children: [
-                      _buildSpecialtyCard(
-                        context,
-                        icon: Icons.local_hospital,
-                        label: 'Medicina\nGeneral',
-                        specialty: 'Medicina General',
-                        color: Colors.blue,
-                      ),
-                      _buildSpecialtyCard(
-                        context,
-                        icon: Icons.face,
-                        label: 'Dermatología',
-                        specialty: 'Dermatología',
-                        color: Colors.pink,
-                      ),
-                      _buildSpecialtyCard(
-                        context,
-                        icon: Icons.psychology,
-                        label: 'Psiquiatría',
-                        specialty: 'Psiquiatría',
-                        color: Colors.purple,
-                      ),
-                      _buildSpecialtyCard(
-                        context,
-                        icon: Icons.hearing,
-                        label: 'ENT',
-                        specialty: 'Otorrinolaringología',
-                        color: Colors.orange,
-                      ),
-                      _buildSpecialtyCard(
-                        context,
-                        icon: Icons.pregnant_woman,
-                        label: 'Salud\nFemenina',
-                        specialty: 'Ginecología',
-                        color: Colors.red[300]!,
-                      ),
-                      _buildSpecialtyCard(
-                        context,
-                        icon: Icons.favorite,
-                        label: 'Cardiología',
-                        specialty: 'Cardiología',
-                        color: Colors.red,
-                      ),
-                      _buildSpecialtyCard(
+                      _buildLargeSpecialtyCard(
                         context,
                         icon: Icons.air,
                         label: 'Neumología',
                         specialty: 'Neumología',
                         color: Colors.teal,
+                        description: 'Especialistas en vías respiratorias y pulmones',
                       ),
-                      _buildSpecialtyCard(
+                      const SizedBox(height: 16),
+                      _buildLargeSpecialtyCard(
                         context,
-                        icon: Icons.child_care,
-                        label: 'Pediatría',
-                        specialty: 'Pediatría',
-                        color: Colors.green,
+                        icon: Icons.local_hospital,
+                        label: 'Medicina General',
+                        specialty: 'Medicina General',
+                        color: Colors.blue,
+                        description: 'Atención médica integral y diagnóstico',
                       ),
                     ],
                   ),
@@ -710,12 +645,13 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
     );
   }
 
-  Widget _buildSpecialtyCard(
+  Widget _buildLargeSpecialtyCard(
     BuildContext context, {
     required IconData icon,
     required String label,
     required String specialty,
     required Color color,
+    required String description,
   }) {
     return GestureDetector(
       onTap: () {
@@ -727,32 +663,61 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
         );
       },
       child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 28, color: color),
+                child: Icon(icon, size: 48, color: color),
               ),
-              const SizedBox(height: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.visible,
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: color,
+                size: 24,
               ),
             ],
           ),

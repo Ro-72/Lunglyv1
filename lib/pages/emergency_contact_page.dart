@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EmergencyContactPage extends StatefulWidget {
   const EmergencyContactPage({super.key});
@@ -14,6 +15,9 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _relationshipController = TextEditingController();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isEditing = false;
   bool _isLoading = true;
@@ -34,22 +38,31 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
     super.dispose();
   }
 
+  String? get _userId => _auth.currentUser?.uid;
+
   Future<void> _loadContactData() async {
     setState(() => _isLoading = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final name = prefs.getString('emergency_contact_name');
-      final phone = prefs.getString('emergency_contact_phone');
-      final email = prefs.getString('emergency_contact_email');
-      final relationship = prefs.getString('emergency_contact_relationship');
+      final userId = _userId;
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
 
-      if (name != null && phone != null) {
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('emergency_contact')
+          .doc('primary')
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
         setState(() {
-          _nameController.text = name;
-          _phoneController.text = phone;
-          _emailController.text = email ?? '';
-          _relationshipController.text = relationship ?? '';
+          _nameController.text = data['name'] ?? '';
+          _phoneController.text = data['phone'] ?? '';
+          _emailController.text = data['email'] ?? '';
+          _relationshipController.text = data['relationship'] ?? '';
           _hasContact = true;
         });
       }
@@ -72,11 +85,24 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
     setState(() => _isLoading = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('emergency_contact_name', _nameController.text);
-      await prefs.setString('emergency_contact_phone', _phoneController.text);
-      await prefs.setString('emergency_contact_email', _emailController.text);
-      await prefs.setString('emergency_contact_relationship', _relationshipController.text);
+      final userId = _userId;
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      // Guardar en Firestore
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('emergency_contact')
+          .doc('primary')
+          .set({
+        'name': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'email': _emailController.text.trim(),
+        'relationship': _relationshipController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       if (mounted) {
         setState(() {

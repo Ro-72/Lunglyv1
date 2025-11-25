@@ -18,6 +18,7 @@ class _MedicoPageState extends State<MedicoPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedLocation = 'Todos';
+  String _selectedModality = 'Todos'; // Online/Presencial
   late String _selectedSpecialty;
 
   @override
@@ -61,7 +62,10 @@ class _MedicoPageState extends State<MedicoPage> {
           _selectedLocation == 'Todos' ||
           doctor.city.toLowerCase().contains(_selectedLocation.toLowerCase());
 
-      return matchesSearch && matchesSpecialty && matchesLocation;
+      // Filtro de modalidad (figurado - todos los doctores aplican por ahora)
+      final matchesModality = _selectedModality == 'Todos' || true;
+
+      return matchesSearch && matchesSpecialty && matchesLocation && matchesModality;
     }).toList();
   }
 
@@ -151,6 +155,21 @@ class _MedicoPageState extends State<MedicoPage> {
                     onChanged: (value) {
                       setState(() {
                         _selectedLocation = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                    label: 'Modalidad',
+                    value: _selectedModality,
+                    options: [
+                      'Todos',
+                      'Online',
+                      'Presencial',
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedModality = value;
                       });
                     },
                   ),
