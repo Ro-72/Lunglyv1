@@ -9,9 +9,17 @@ import 'pages/profile_page.dart';
 import 'pages/payment_methods_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/about_page.dart';
+import 'pages/admin/manage_generic_users_page.dart';
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
+  final bool isAdmin;
+  final Function(String)? onInterfaceChange;
+
+  const MainNavigation({
+    super.key,
+    this.isAdmin = false,
+    this.onInterfaceChange,
+  });
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -145,9 +153,56 @@ class _MainNavigationState extends State<MainNavigation> {
                   _authService.currentUser?.email ?? 'User',
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
+                if (widget.isAdmin)
+                  const SizedBox(height: 4),
+                if (widget.isAdmin)
+                  const Text(
+                    'Administrador - Vista Paciente',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
               ],
             ),
           ),
+          // Opción para cambiar de interfaz (solo para admin)
+          if (widget.isAdmin && widget.onInterfaceChange != null) ...[
+            ListTile(
+              leading: const Icon(Icons.swap_horiz, color: Color(0xFF4990E2)),
+              title: const Text(
+                'Cambiar a Vista Médico',
+                style: TextStyle(
+                  color: Color(0xFF4990E2),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                widget.onInterfaceChange!('medico');
+              },
+            ),
+            const Divider(),
+          ],
+          if (widget.isAdmin) ...[
+            ListTile(
+              leading: const Icon(Icons.group_add, color: Color(0xFF4990E2)),
+              title: const Text(
+                'Gestionar Usuarios Genéricos',
+                style: TextStyle(
+                  color: Color(0xFF4990E2),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ManageGenericUsersPage(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+          ],
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Perfil Médico'),
@@ -196,11 +251,16 @@ class _MainNavigationState extends State<MainNavigation> {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Cerrar Sesión'),
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text(
+              'Cerrar Sesión',
+              style: TextStyle(color: Colors.red),
+            ),
             onTap: () async {
               await _authService.signOut();
-              Navigator.pop(context);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
           ),
         ],

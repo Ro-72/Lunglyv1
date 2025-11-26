@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
 import '../models/doctor.dart';
 import 'appointment_booking_page.dart';
-
+// ESTA PAGINA ESTA DESCONTINUADA SOLO PARA EL ADMIN
 class ScheduleAppointmentPage extends StatefulWidget {
   final String? selectedSpecialty;
 

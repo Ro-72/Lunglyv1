@@ -1,0 +1,94 @@
+{
+  "medicines": [
+    {
+      "name": "Salbutamol",
+      "description": "Broncodilatador de acción rápida",
+      "defaultDose": 100,
+      "unit": "mcg"
+    },
+    {
+      "name": "Budesonida",
+      "description": "Corticosteroide inhalado",
+      "defaultDose": 200,
+      "unit": "mcg"
+    },
+    {
+      "name": "Formoterol",
+      "description": "Broncodilatador de acción prolongada",
+      "defaultDose": 12,
+      "unit": "mcg"
+    },
+    {
+      "name": "Montelukast",
+      "description": "Antileucotrieno para asma",
+      "defaultDose": 10,
+      "unit": "mg"
+    },
+    {
+      "name": "Amoxicilina",
+      "description": "Antibiótico para infecciones respiratorias",
+      "defaultDose": 500,
+      "unit": "mg"
+    },
+    {
+      "name": "Azitromicina",
+      "description": "Antibiótico macrólido",
+      "defaultDose": 500,
+      "unit": "mg"
+    },
+    {
+      "name": "Fluticasona",
+      "description": "Corticosteroide inhalado",
+      "defaultDose": 250,
+      "unit": "mcg"
+    },
+    {
+      "name": "Ipratropio",
+      "description": "Broncodilatador anticolinérgico",
+      "defaultDose": 20,
+      "unit": "mcg"
+    },
+    {
+      "name": "Teofilina",
+      "description": "Broncodilatador oral",
+      "defaultDose": 300,
+      "unit": "mg"
+    },
+    {
+      "name": "Prednisolona",
+      "description": "Corticosteroide oral",
+      "defaultDose": 20,
+      "unit": "mg"
+    },
+    {
+      "name": "N-Acetilcisteína",
+      "description": "Mucolítico",
+      "defaultDose": 600,
+      "unit": "mg"
+    },
+    {
+      "name": "Bromhexina",
+      "description": "Expectorante",
+      "defaultDose": 8,
+      "unit": "mg"
+    },
+    {
+      "name": "Loratadina",
+      "description": "Antihistamínico",
+      "defaultDose": 10,
+      "unit": "mg"
+    },
+    {
+      "name": "Cetirizina",
+      "description": "Antihistamínico",
+      "defaultDose": 10,
+      "unit": "mg"
+    },
+    {
+      "name": "Dextrometorfano",
+      "description": "Antitusivo",
+      "defaultDose": 30,
+      "unit": "mg"
+    }
+  ]
+}
