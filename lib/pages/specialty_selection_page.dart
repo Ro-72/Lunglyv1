@@ -329,8 +329,22 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundImage: AssetImage(answer.doctorPhoto),
                   backgroundColor: Colors.green[100],
+                  child: ClipOval(
+                    child: Image.asset(
+                      answer.doctorPhoto,
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.person,
+                          size: 18,
+                          color: Colors.green[700],
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -439,8 +453,22 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                   children: [
                     CircleAvatar(
                       radius: 24,
-                      backgroundImage: AssetImage(answer.doctorPhoto),
                       backgroundColor: Colors.green[100],
+                      child: ClipOval(
+                        child: Image.asset(
+                          answer.doctorPhoto,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.person,
+                              size: 24,
+                              color: Colors.green[700],
+                            );
+                          },
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -504,6 +532,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                 'A mi Madre le gusto mucho la experiencia, explicación detallada',
             author: 'Marco Precilla',
             rating: 5,
+            userPhoto: 'assets/users/user1.png',
           ),
           const SizedBox(height: 12),
           // Opinión 2
@@ -514,6 +543,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                 'Mientras atendía a mi hijo me dijo, yo soy cojito, y no permito que un niño se quede sin caminar...',
             author: 'mcaa',
             rating: 5,
+            userPhoto: 'assets/users/user2.png',
           ),
           const SizedBox(height: 12),
           // Opinión 3
@@ -524,6 +554,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                 'Es todo lo que esperas de una consulta, un especialista que escuche y se tome el tiempo necesario...',
             author: 'Licero',
             rating: 5,
+            userPhoto: 'assets/users/user3.png',
           ),
         ],
       ),
@@ -536,6 +567,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
     required String opinion,
     required String author,
     required int rating,
+    required String userPhoto,
   }) {
     return Card(
       elevation: 2,
@@ -549,7 +581,21 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: Colors.blue[100],
-                  child: const Icon(Icons.person, size: 24),
+                  child: ClipOval(
+                    child: Image.asset(
+                      userPhoto,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.person,
+                          size: 24,
+                          color: Colors.blue[700],
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
