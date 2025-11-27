@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/appointment.dart';
 import '../models/doctor.dart';
 import '../utils/doctor_photo_helper.dart';
+import 'appointment_detail_patient_page.dart';
 
 class MyAppointmentsPage extends StatelessWidget {
   const MyAppointmentsPage({super.key});
@@ -178,17 +179,28 @@ class _AppointmentCard extends StatelessWidget {
           );
         }
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AppointmentDetailPatientPage(
+                  appointment: appointment,
+                ),
+              ),
+            );
+          },
+          child: Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Row(
                   children: [
                     CircleAvatar(
@@ -366,7 +378,8 @@ class _AppointmentCard extends StatelessWidget {
                     ),
                   ),
                 ],
-              ],
+                ],
+              ),
             ),
           ),
         );

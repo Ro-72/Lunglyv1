@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'appointment_detail_page.dart';
+import 'appointment_detail_doctor_page.dart';
 import '../../models/treatment.dart';
 import '../../models/medication.dart';
 
@@ -272,10 +273,28 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     {required bool isPending}
   ) {
     final patientId = data['patientId'] as String?;
-    final appointmentDate = (data['appointmentDate'] as Timestamp?)?.toDate();
+    final appointmentDateTimestamp = data['appointmentDate'];
+    final appointmentDate = appointmentDateTimestamp != null
+        ? (appointmentDateTimestamp is Timestamp
+            ? appointmentDateTimestamp.toDate()
+            : null)
+        : null;
     final duration = data['consultationMinutes'] as int? ?? 30;
+    final startTime = data['startTime'] as String?;
 
-    return Card(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AppointmentDetailDoctorPage(
+              appointmentId: appointmentId,
+              appointmentData: data,
+            ),
+          ),
+        );
+      },
+      child: Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
@@ -360,22 +379,15 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               const Divider(),
               const SizedBox(height: 8),
               Row(
+
+              ),
+              const SizedBox(height: 8),
+              Row(
                 children: [
-                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    appointmentDate != null
-                        ? '${appointmentDate.day}/${appointmentDate.month}/${appointmentDate.year}'
-                        : 'Fecha no disponible',
-                    style: TextStyle(color: Colors.grey[700]),
-                  ),
-                  const SizedBox(width: 16),
                   Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 8),
                   Text(
-                    appointmentDate != null
-                        ? '${appointmentDate.hour.toString().padLeft(2, '0')}:${appointmentDate.minute.toString().padLeft(2, '0')}'
-                        : '--:--',
+                    startTime ?? 'Hora no disponible',
                     style: TextStyle(color: Colors.grey[700]),
                   ),
                 ],
@@ -398,6 +410,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -431,12 +444,30 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     Map<String, dynamic> data,
   ) {
     final patientId = data['patientId'] as String?;
-    final appointmentDate = (data['appointmentDate'] as Timestamp?)?.toDate();
+    final appointmentDateTimestamp = data['appointmentDate'];
+    final appointmentDate = appointmentDateTimestamp != null
+        ? (appointmentDateTimestamp is Timestamp
+            ? appointmentDateTimestamp.toDate()
+            : null)
+        : null;
     final duration = data['consultationMinutes'] as int? ?? 30;
+    final startTime = data['startTime'] as String?;
     final status = data['status'] as String?;
     final isCompleted = status == 'completed';
 
-    return Card(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AppointmentDetailDoctorPage(
+              appointmentId: appointmentId,
+              appointmentData: data,
+            ),
+          ),
+        );
+      },
+      child: Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
@@ -578,10 +609,25 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-
+                const Divider(),
+                const SizedBox(height: 8),
+                Row(
+                ),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      startTime ?? 'Hora no disponible',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.timer, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 8),
                     Text(
                       'Duración: $duration minutos',
@@ -665,6 +711,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           },
         ),
       ),
+      ),
     );
   }
 
@@ -701,47 +748,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Síntomas',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: symptomsController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  hintText: 'Describa los síntomas...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Tratamiento',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: treatmentController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  hintText: 'Describa el tratamiento...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Notas Adicionales',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: notesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'Notas adicionales...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
+
             ],
           ),
         ),
@@ -753,7 +760,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4990E2),
+              backgroundColor: const Color.fromARGB(255, 255, 255, 255),
             ),
             child: const Text('Guardar'),
           ),
@@ -989,6 +996,9 @@ class _AddPrescriptionDialog extends StatefulWidget {
 
 class _AddPrescriptionDialogState extends State<_AddPrescriptionDialog> {
   final List<Map<String, dynamic>> _medications = [];
+  bool _useSharedSettings = false;
+  String _sharedFrequency = 'Cada 8 horas';
+  int _sharedDurationDays = 7;
 
   @override
   Widget build(BuildContext context) {
@@ -996,11 +1006,89 @@ class _AddPrescriptionDialogState extends State<_AddPrescriptionDialog> {
       title: Text('Receta Médica - ${widget.patientName}'),
       content: SizedBox(
         width: double.maxFinite,
-        height: 500,
+        height: 600,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Configuración compartida switch
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Configuración compartida',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'Misma frecuencia y duración para todos',
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _useSharedSettings,
+                        onChanged: (value) {
+                          setState(() {
+                            _useSharedSettings = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (_useSharedSettings) ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _sharedFrequency,
+                      decoration: const InputDecoration(
+                        labelText: 'Frecuencia',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      items: ['Diario', 'Cada 12 horas', 'Cada 8 horas', 'Cada 6 horas']
+                          .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _sharedFrequency = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      initialValue: _sharedDurationDays.toString(),
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Duración (días)',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _sharedDurationDays = int.tryParse(value) ?? 7;
+                        });
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1045,6 +1133,8 @@ class _AddPrescriptionDialogState extends State<_AddPrescriptionDialog> {
                   itemCount: _medications.length,
                   itemBuilder: (context, index) {
                     final med = _medications[index];
+                    final frequency = _useSharedSettings ? _sharedFrequency : med['frequency'];
+                    final durationDays = _useSharedSettings ? _sharedDurationDays : med['durationDays'];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
@@ -1054,7 +1144,7 @@ class _AddPrescriptionDialogState extends State<_AddPrescriptionDialog> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          '${med['dose']} - ${med['frequency']} durante ${med['durationDays']} días',
+                          '${med['dose']} - $frequency durante $durationDays días',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 12),
@@ -1079,9 +1169,22 @@ class _AddPrescriptionDialogState extends State<_AddPrescriptionDialog> {
         ElevatedButton(
           onPressed: _medications.isEmpty
               ? null
-              : () => Navigator.pop(context, _medications),
+              : () {
+                  // Aplicar configuración compartida si está activada
+                  final finalMedications = _medications.map((med) {
+                    if (_useSharedSettings) {
+                      return {
+                        ...med,
+                        'frequency': _sharedFrequency,
+                        'durationDays': _sharedDurationDays,
+                      };
+                    }
+                    return med;
+                  }).toList();
+                  Navigator.pop(context, finalMedications);
+                },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
+            backgroundColor: const Color.fromARGB(255, 255, 255, 255),
           ),
           child: const Text('Guardar Receta'),
         ),
@@ -1092,7 +1195,9 @@ class _AddPrescriptionDialogState extends State<_AddPrescriptionDialog> {
   Future<void> _addMedication() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => const _AddMedicationDialog(),
+      builder: (context) => _AddMedicationDialog(
+        useSharedSettings: _useSharedSettings,
+      ),
     );
 
     if (result != null) {
@@ -1111,7 +1216,11 @@ class _AddPrescriptionDialogState extends State<_AddPrescriptionDialog> {
 
 // Dialog para agregar un medicamento individual
 class _AddMedicationDialog extends StatefulWidget {
-  const _AddMedicationDialog();
+  final bool useSharedSettings;
+
+  const _AddMedicationDialog({
+    this.useSharedSettings = false,
+  });
 
   @override
   State<_AddMedicationDialog> createState() => _AddMedicationDialogState();
@@ -1156,28 +1265,30 @@ class _AddMedicationDialogState extends State<_AddMedicationDialog> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _frequency,
-              decoration: const InputDecoration(
-                labelText: 'Frecuencia',
-                border: OutlineInputBorder(),
+            if (!widget.useSharedSettings) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _frequency,
+                decoration: const InputDecoration(
+                  labelText: 'Frecuencia',
+                  border: OutlineInputBorder(),
+                ),
+                items: ['Diario', 'Cada 12 horas', 'Cada 8 horas', 'Cada 6 horas']
+                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                    .toList(),
+                onChanged: (value) => setState(() => _frequency = value!),
               ),
-              items: ['Diario', 'Cada 12 horas', 'Cada 8 horas', 'Cada 6 horas']
-                  .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                  .toList(),
-              onChanged: (value) => setState(() => _frequency = value!),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _durationController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Duración (días)',
-                hintText: 'Ej: 7',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _durationController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Duración (días)',
+                  hintText: 'Ej: 7',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

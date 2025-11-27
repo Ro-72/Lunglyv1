@@ -149,29 +149,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final Color colorCurve = const Color(0xFF4990E2);
 
   final List<String> _specialties = [
-    'Cardiología',
-    'Dermatología',
-    'Endocrinología',
-    'Gastroenterología',
-    'Geriatría',
-    'Ginecología',
-    'Hematología',
-    'Infectología',
     'Medicina General',
-    'Medicina Interna',
-    'Nefrología',
     'Neumología',
-    'Neurología',
-    'Nutrición',
-    'Oftalmología',
-    'Oncología',
-    'Ortopedia',
-    'Otorrinolaringología',
-    'Pediatría',
-    'Psiquiatría',
-    'Reumatología',
-    'Traumatología',
-    'Urología',
+
   ];
 
   Future<void> _register() async {
@@ -244,7 +224,7 @@ class _RegisterPageState extends State<RegisterPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       ),
     );
   }
@@ -307,8 +287,8 @@ class _RegisterPageState extends State<RegisterPage> {
       'Registrarse',
       gradient: LinearGradient(
         colors: [
-          const Color.fromRGBO(97, 6, 165, 1.0),
-          const Color.fromRGBO(45, 160, 240, 1.0),
+          const Color.fromARGB(255, 240, 240, 240),
+          const Color.fromARGB(255, 255, 255, 255),
         ],
       ),
       style: const TextStyle(
