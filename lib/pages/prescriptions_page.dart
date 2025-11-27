@@ -1,298 +1,118 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/treatment.dart';
+import '../models/medication.dart';
 
-class Prescription {
-  final String id;
-  final String medicationName;
-  final String date;
-  final String doctor;
-  final String dosage;
-  final String frequency;
-  final String duration;
-  final String notes;
-  final String status;
-
-  Prescription({
-    required this.id,
-    required this.medicationName,
-    required this.date,
-    required this.doctor,
-    required this.dosage,
-    required this.frequency,
-    required this.duration,
-    required this.notes,
-    required this.status,
-  });
-}
-
-class PrescriptionsPage extends StatefulWidget {
+class PrescriptionsPage extends StatelessWidget {
   const PrescriptionsPage({super.key});
 
   @override
-  State<PrescriptionsPage> createState() => _PrescriptionsPageState();
-}
-
-class _PrescriptionsPageState extends State<PrescriptionsPage> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  String _selectedStatus = 'Todos';
-
-  // Datos de prueba
-  final List<Prescription> _allPrescriptions = [
-    Prescription(
-      id: '1',
-      medicationName: 'Paracetamol 500mg',
-      date: '15 de Marzo 2025',
-      doctor: 'Dr. Juan Pérez',
-      dosage: '500mg',
-      frequency: 'Cada 8 horas',
-      duration: '7 días',
-      notes: 'Tomar después de las comidas',
-      status: 'Activa',
-    ),
-    Prescription(
-      id: '2',
-      medicationName: 'Omeprazol 20mg',
-      date: '10 de Marzo 2025',
-      doctor: 'Dra. María González',
-      dosage: '20mg',
-      frequency: 'Una vez al día',
-      duration: '30 días',
-      notes: 'Tomar en ayunas, 30 minutos antes del desayuno',
-      status: 'Activa',
-    ),
-    Prescription(
-      id: '3',
-      medicationName: 'Amoxicilina 500mg',
-      date: '28 de Febrero 2025',
-      doctor: 'Dr. Carlos Ramírez',
-      dosage: '500mg',
-      frequency: 'Cada 12 horas',
-      duration: '10 días',
-      notes: 'Completar todo el tratamiento aunque se sienta mejor',
-      status: 'Completada',
-    ),
-    Prescription(
-      id: '4',
-      medicationName: 'Loratadina 10mg',
-      date: '20 de Febrero 2025',
-      doctor: 'Dra. Ana Martínez',
-      dosage: '10mg',
-      frequency: 'Una vez al día',
-      duration: '15 días',
-      notes: 'Para alergia estacional',
-      status: 'Completada',
-    ),
-    Prescription(
-      id: '5',
-      medicationName: 'Ibuprofeno 400mg',
-      date: '12 de Febrero 2025',
-      doctor: 'Dr. Luis Fernández',
-      dosage: '400mg',
-      frequency: 'Cada 8 horas si hay dolor',
-      duration: '5 días',
-      notes: 'Tomar con alimentos. No exceder 1200mg diarios',
-      status: 'Completada',
-    ),
-    Prescription(
-      id: '6',
-      medicationName: 'Metformina 850mg',
-      date: '5 de Febrero 2025',
-      doctor: 'Dra. Patricia Sánchez',
-      dosage: '850mg',
-      frequency: 'Dos veces al día',
-      duration: 'Uso continuo',
-      notes: 'Control de glucosa. Tomar con desayuno y cena',
-      status: 'Activa',
-    ),
-    Prescription(
-      id: '7',
-      medicationName: 'Atorvastatina 20mg',
-      date: '1 de Febrero 2025',
-      doctor: 'Dr. Carlos Ramírez',
-      dosage: '20mg',
-      frequency: 'Una vez al día',
-      duration: 'Uso continuo',
-      notes: 'Tomar por la noche. Control de colesterol',
-      status: 'Activa',
-    ),
-    Prescription(
-      id: '8',
-      medicationName: 'Salbutamol Inhalador',
-      date: '25 de Enero 2025',
-      doctor: 'Dr. Juan Pérez',
-      dosage: '100mcg por inhalación',
-      frequency: 'Según necesidad',
-      duration: 'Uso continuo',
-      notes: 'Para crisis de asma. Máximo 8 inhalaciones al día',
-      status: 'Activa',
-    ),
-  ];
-
-  final List<String> _statusList = ['Todos', 'Activa', 'Completada'];
-
-  List<Prescription> get _filteredPrescriptions {
-    return _allPrescriptions.where((prescription) {
-      final matchesSearch = prescription.medicationName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          prescription.doctor.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          prescription.notes.toLowerCase().contains(_searchQuery.toLowerCase());
-
-      final matchesStatus = _selectedStatus == 'Todos' || prescription.status == _selectedStatus;
-
-      return matchesSearch && matchesStatus;
-    }).toList();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Recetas Médicas'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(
+          child: Text('Debes iniciar sesión para ver tus recetas'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Container(
-          height: 42,
-          margin: const EdgeInsets.only(right: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-            decoration: InputDecoration(
-              hintText: 'Buscar recetas...',
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 15),
-              prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              suffixIcon: Icon(Icons.filter_list, color: Colors.grey[400]),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-            ),
-          ),
-        ),
+        title: const Text('Recetas Médicas'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
-        elevation: 0,
       ),
-      body: Column(
-        children: [
-          // Filtros de estado
-          SizedBox(
-            height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _statusList.length,
-              itemBuilder: (context, index) {
-                final status = _statusList[index];
-                final isSelected = _selectedStatus == status;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(status),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedStatus = status;
-                      });
-                    },
-                    backgroundColor: Colors.grey[200],
-                    selectedColor: Colors.purple[300],
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('medical_records')
+            .where('prescription', isNull: false)
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-          const SizedBox(height: 8),
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          // Resultados
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_filteredPrescriptions.length} receta(s) encontrada(s)',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
-                ),
-                if (_searchQuery.isNotEmpty || _selectedStatus != 'Todos')
-                  TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _searchQuery = '';
-                        _selectedStatus = 'Todos';
-                      });
-                    },
-                    icon: const Icon(Icons.clear_all, size: 16),
-                    label: const Text('Limpiar filtros'),
-                  ),
-              ],
-            ),
-          ),
+          final records = snapshot.data?.docs ?? [];
+          final prescriptions = records.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final prescription = data['prescription'] as List<dynamic>?;
+            return prescription != null && prescription.isNotEmpty;
+          }).toList();
 
-          const Divider(),
-
-          // Lista de recetas
-          Expanded(
-            child: _filteredPrescriptions.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No se encontraron recetas',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredPrescriptions.length,
-                    itemBuilder: (context, index) {
-                      final prescription = _filteredPrescriptions[index];
-                      return _buildPrescriptionCard(prescription);
-                    },
+          if (prescriptions.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.medication_outlined,
+                      size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No tienes recetas médicas',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
-          ),
-        ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Las recetas aparecerán aquí después de tus consultas',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: prescriptions.length,
+            itemBuilder: (context, index) {
+              final recordDoc = prescriptions[index];
+              final recordData = recordDoc.data() as Map<String, dynamic>;
+              return _PrescriptionCard(
+                recordId: recordDoc.id,
+                recordData: recordData,
+              );
+            },
+          );
+        },
       ),
     );
   }
+}
 
-  Widget _buildPrescriptionCard(Prescription prescription) {
-    final isActive = prescription.status == 'Activa';
+class _PrescriptionCard extends StatelessWidget {
+  final String recordId;
+  final Map<String, dynamic> recordData;
+
+  const _PrescriptionCard({
+    required this.recordId,
+    required this.recordData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final prescription = recordData['prescription'] as List<dynamic>? ?? [];
+    final appointmentDate = recordData['appointmentDate'] as Timestamp?;
+    final alreadyStarted = recordData['treatmentStarted'] as bool? ?? false;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -300,217 +120,290 @@ class _PrescriptionsPageState extends State<PrescriptionsPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
-        onTap: () => _showPrescriptionDetails(prescription),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isActive ? Colors.purple[100] : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.medication,
-                      color: isActive ? Colors.purple[700] : Colors.grey[600],
-                      size: 24,
-                    ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: alreadyStarted ? Colors.grey[300] : Colors.purple[100],
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          prescription.medicationName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  child: Icon(
+                    Icons.medication,
+                    color: alreadyStarted ? Colors.grey[600] : Colors.purple[700],
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Receta Médica',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 4),
+                      ),
+                      const SizedBox(height: 4),
+                      if (appointmentDate != null)
                         Text(
-                          prescription.date,
+                          _formatDate(appointmentDate.toDate()),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
+                ),
+                if (alreadyStarted)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isActive ? Colors.green[100] : Colors.grey[200],
+                      color: Colors.green[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      prescription.status,
+                      'En tratamiento',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: isActive ? Colors.green[700] : Colors.grey[700],
+                        color: Colors.green[700],
                       ),
                     ),
                   ),
-                ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Medicamentos:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.person, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    prescription.doctor,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
+            ),
+            const SizedBox(height: 8),
+            ...prescription.map((med) {
+              final medicine = med as Map<String, dynamic>;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            medicine['name'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            medicine['dose'].toString(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    if (medicine['frequency'] != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${medicine['frequency']} durante ${medicine['durationDays']} días',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                    if (medicine['description'] != null &&
+                        medicine['description'].toString().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        medicine['description'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }).toList(),
+            if (!alreadyStarted) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _startTreatment(context, prescription, recordId),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Iniciar Tratamiento'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    prescription.frequency,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    prescription.duration,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                prescription.notes,
-                style: const TextStyle(fontSize: 13),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton.icon(
-                    onPressed: () => _showPrescriptionDetails(prescription),
-                    icon: const Icon(Icons.visibility, size: 16),
-                    label: const Text('Ver detalles'),
-                  ),
-                ],
+                ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 
-  void _showPrescriptionDetails(Prescription prescription) {
-    final isActive = prescription.status == 'Activa';
+  String _formatDate(DateTime date) {
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
+    ];
+    return '${date.day} de ${months[date.month - 1]} ${date.year}';
+  }
 
-    showDialog(
+  Future<void> _startTreatment(
+    BuildContext context,
+    List<dynamic> prescription,
+    String recordId,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(prescription.medicationName),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: isActive ? Colors.green[100] : Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                prescription.status,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isActive ? Colors.green[700] : Colors.grey[700],
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow('Fecha de prescripción:', prescription.date),
-              const SizedBox(height: 12),
-              _buildDetailRow('Médico:', prescription.doctor),
-              const SizedBox(height: 12),
-              _buildDetailRow('Dosis:', prescription.dosage),
-              const SizedBox(height: 12),
-              _buildDetailRow('Frecuencia:', prescription.frequency),
-              const SizedBox(height: 12),
-              _buildDetailRow('Duración:', prescription.duration),
-              const SizedBox(height: 12),
-              const Text(
-                'Instrucciones:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.purple[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.purple[200]!),
-                ),
-                child: Text(
-                  prescription.notes,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
-          ),
+        title: const Text('Iniciar Tratamiento'),
+        content: const Text(
+          '¿Deseas iniciar el seguimiento de este tratamiento?\n\n'
+          'Se creará un nuevo tratamiento activo con todos los medicamentos de esta receta.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.purple,
+            ),
+            child: const Text('Iniciar'),
           ),
         ],
       ),
     );
+
+    if (confirmed != true) return;
+
+    try {
+      // Convertir medicamentos de la receta a Medication objects
+      final medications = prescription.map((med) {
+        final medicine = med as Map<String, dynamic>;
+        final frequency = medicine['frequency'] as String? ?? 'Cada 8 horas';
+        final durationDays = medicine['durationDays'] as int? ?? 7;
+
+        return Medication(
+          id: DateTime.now().millisecondsSinceEpoch.toString() + medicine['name'].hashCode.toString(),
+          name: medicine['name'] ?? '',
+          dosage: medicine['dose'].toString(),
+          frequency: frequency,
+          durationDays: durationDays,
+          nextDose: DateTime.now().add(_getFrequencyDuration(frequency)),
+        );
+      }).toList();
+
+      // Crear el tratamiento
+      final treatment = Treatment(
+        id: '',
+        name: 'Receta Médica - ${_formatDate(DateTime.now())}',
+        description: 'Tratamiento basado en receta médica',
+        medications: medications,
+        userId: user.uid,
+      );
+
+      // Guardar en Firebase
+      await FirebaseFirestore.instance
+          .collection('treatments')
+          .add(treatment.toMap());
+
+      // Marcar la receta como iniciada
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('medical_records')
+          .doc(recordId)
+          .update({'treatmentStarted': true});
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tratamiento iniciado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al iniciar tratamiento: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(value),
-        ),
-      ],
-    );
+  Duration _getFrequencyDuration(String frequency) {
+    switch (frequency) {
+      case 'Cada 6 horas':
+        return const Duration(hours: 6);
+      case 'Cada 8 horas':
+        return const Duration(hours: 8);
+      case 'Cada 12 horas':
+        return const Duration(hours: 12);
+      case 'Diario':
+      default:
+        return const Duration(hours: 24);
+    }
   }
 }
