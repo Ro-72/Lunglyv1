@@ -87,6 +87,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage> {
         'status': 'completed',
         'completedAt': FieldValue.serverTimestamp(),
         'autoCompleted': true,
+        'isArchived': false,
       });
 
       if (mounted) {
@@ -540,6 +541,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage> {
         'status': 'completed',
         'completedAt': FieldValue.serverTimestamp(),
         'manuallyCompleted': true,
+        'isArchived': false,
       });
 
       _appointmentTimer?.cancel();

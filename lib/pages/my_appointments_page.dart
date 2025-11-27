@@ -59,7 +59,7 @@ class MyAppointmentsPage extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('appointments')
             .where('patientId', isEqualTo: user.uid)
-            .orderBy('appointmentDate', descending: false)
+            .where('isArchived', isEqualTo: false)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -95,16 +95,18 @@ class MyAppointmentsPage extends StatelessWidget {
           }
 
           // Separar citas próximas y pasadas
-          // Las citas confirmadas o completadas se consideran como pasadas
+          // Las citas próximas son pending O confirmed con fecha futura
+          // Las citas pasadas son completed O pending/confirmed con fecha pasada
           final now = DateTime.now();
+          final todayStart = DateTime(now.year, now.month, now.day);
+          
           final upcomingAppointments = appointments.where((apt) {
-            return apt.status == 'pending' && apt.date.isAfter(now);
+            return apt.date.isAfter(todayStart) && 
+                   (apt.status == 'pending' || apt.status == 'confirmed');
           }).toList();
           
           final pastAppointments = appointments.where((apt) {
-            return apt.status == 'confirmed' || 
-                   apt.status == 'completed' || 
-                   (apt.status == 'pending' && apt.date.isBefore(now));
+            return apt.date.isBefore(todayStart) || apt.status == 'completed';
           }).toList();
 
           return ListView(
@@ -408,12 +410,12 @@ class _AppointmentCard extends StatelessWidget {
       await FirebaseFirestore.instance
           .collection('appointments')
           .doc(appointment.id)
-          .delete();
+          .update({'isArchived': true});
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Cita cancelada exitosamente'),
+            content: Text('Cita archivada exitosamente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -422,7 +424,7 @@ class _AppointmentCard extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cancelar cita: $e'),
+            content: Text('Error al archivar cita: $e'),
             backgroundColor: Colors.red,
           ),
         );

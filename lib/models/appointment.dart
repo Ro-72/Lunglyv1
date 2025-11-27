@@ -10,10 +10,11 @@ class Appointment {
   final String status; // 'pending', 'confirmed', 'completed', 'cancelled'
   final double price;
   final String? paymentMethod;
-  final String? medicalRecordId; // ID del historial médico asociado
-  final String? prescriptionId; // ID de la receta asociada
-  final DateTime? confirmedAt; // Fecha de confirmación
-  final DateTime? completedAt; // Fecha de completación
+  final String? medicalRecordId;
+  final String? prescriptionId;
+  final DateTime? confirmedAt;
+  final DateTime? completedAt;
+  final bool isArchived; // Nuevo campo
 
   Appointment({
     required this.id,
@@ -29,6 +30,7 @@ class Appointment {
     this.prescriptionId,
     this.confirmedAt,
     this.completedAt,
+    this.isArchived = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -45,6 +47,7 @@ class Appointment {
       'prescriptionId': prescriptionId,
       'confirmedAt': confirmedAt != null ? Timestamp.fromDate(confirmedAt!) : null,
       'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'isArchived': isArchived,
     };
   }
 
@@ -63,6 +66,7 @@ class Appointment {
       prescriptionId: map['prescriptionId'],
       confirmedAt: map['confirmedAt'] != null ? (map['confirmedAt'] as Timestamp).toDate() : null,
       completedAt: map['completedAt'] != null ? (map['completedAt'] as Timestamp).toDate() : null,
+      isArchived: map['isArchived'] ?? false,
     );
   }
 }

@@ -886,17 +886,16 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage>
       patientId: user.uid,
       date: date,
       startTime: time,
-      durationHours:
-          1, // Fixed 15-minute slots, pero guardamos como 1 hora para compatibilidad
+      durationHours: 1,
       price: widget.doctor.pricePerAppointment,
       paymentMethod: paymentType.toString().split('.').last,
+      isArchived: false,
     );
 
     await _firestore.collection('appointments').add(appointment.toMap());
 
     if (!mounted) return;
 
-    // Recargar disponibilidad
     await _loadAvailableSlots();
   }
 
