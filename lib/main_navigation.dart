@@ -28,6 +28,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   final _authService = AuthService();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // GlobalKeys for nested navigators
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
@@ -78,6 +79,7 @@ class _MainNavigationState extends State<MainNavigation> {
         }
       },
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -193,12 +195,18 @@ class _MainNavigationState extends State<MainNavigation> {
               ),
               onTap: () async {
                 Navigator.pop(context);
-                await Navigator.push(
+                final shouldOpenDrawer = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ManageGenericUsersPage(),
+                    builder: (context) => const ManageGenericUsersPage(returnToDrawer: true),
                   ),
                 );
+
+                // Si debe abrir el drawer, esperar un momento y abrirlo
+                if (shouldOpenDrawer == true && mounted) {
+                  await Future.delayed(const Duration(milliseconds: 100));
+                  _scaffoldKey.currentState?.openDrawer();
+                }
               },
             ),
             const Divider(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/doctor.dart';
+import '../utils/doctor_photo_helper.dart';
 import 'appointment_booking_page.dart';
 import 'doctor_detail_page.dart';
 
@@ -28,20 +29,6 @@ class _MedicoPageState extends State<MedicoPage> {
     _selectedSpecialty = widget.selectedSpecialty ?? 'Todos';
   }
 
-  // Lista de imágenes por defecto disponibles
-  final List<String> _defaultDoctorImages = [
-    'assets/photos/0868a03e801b077b8cdfa5b164fe2a08_medium_square.jpg',
-    'assets/photos/32d4f7b7-5d21-4250-973c-1f621051c500_medium_square.jpg',
-    'assets/photos/976f14d7-bda9-41e1-94dc-89b4f5f14efa_medium_square.jpg',
-    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5.jpeg',
-    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5_140_square.jpg',
-  ];
-
-  // Obtener imagen por defecto según el ID del doctor
-  String _getDefaultDoctorImage(String doctorId) {
-    final index = doctorId.hashCode.abs() % _defaultDoctorImages.length;
-    return _defaultDoctorImages[index];
-  }
 
   List<Doctor> _filterDoctors(List<Doctor> doctors) {
     return doctors.where((doctor) {
@@ -62,8 +49,10 @@ class _MedicoPageState extends State<MedicoPage> {
           _selectedLocation == 'Todos' ||
           doctor.city.toLowerCase().contains(_selectedLocation.toLowerCase());
 
-      // Filtro de modalidad (figurado - todos los doctores aplican por ahora)
-      final matchesModality = _selectedModality == 'Todos' || true;
+      // Filtro de modalidad
+      final matchesModality = _selectedModality == 'Todos' ||
+          (_selectedModality == 'Online' && doctor.appointmentType == 'online') ||
+          (_selectedModality == 'Presencial' && doctor.appointmentType == 'presencial');
 
       return matchesSearch && matchesSpecialty && matchesLocation && matchesModality;
     }).toList();
@@ -355,42 +344,39 @@ class _MedicoPageState extends State<MedicoPage> {
                         color: Colors.grey[200],
                       ),
                       child: ClipOval(
-                        child:
-                            doctor.profileImageUrl != null &&
-                                    doctor.profileImageUrl!.isNotEmpty
-                                ? Image.network(
-                                  doctor.profileImageUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    // Si falla la carga de la red, usar imagen por defecto
-                                    return Image.asset(
-                                      _getDefaultDoctorImage(doctor.id),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (
-                                        context,
-                                        error,
-                                        stackTrace,
-                                      ) {
-                                        return Icon(
-                                          Icons.person,
-                                          size: 50,
-                                          color: Colors.grey[400],
-                                        );
-                                      },
-                                    );
-                                  },
-                                )
-                                : Image.asset(
-                                  _getDefaultDoctorImage(doctor.id),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      Icons.person,
-                                      size: 50,
-                                      color: Colors.grey[400],
-                                    );
-                                  },
-                                ),
+                        child: doctor.profileImageUrl != null &&
+                                doctor.profileImageUrl!.isNotEmpty
+                            ? Image.network(
+                                doctor.profileImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  // Si falla la carga de la red, usar imagen local
+                                  return Image.asset(
+                                    DoctorPhotoHelper.getDoctorPhotoPath(
+                                        doctor.photoNumber),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: Colors.grey[400],
+                                      );
+                                    },
+                                  );
+                                },
+                              )
+                            : Image.asset(
+                                DoctorPhotoHelper.getDoctorPhotoPath(
+                                    doctor.photoNumber),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: Colors.grey[400],
+                                  );
+                                },
+                              ),
                       ),
                     ),
                     if (doctor.isApolloDoctor)

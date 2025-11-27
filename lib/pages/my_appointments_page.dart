@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/appointment.dart';
 import '../models/doctor.dart';
+import '../utils/doctor_photo_helper.dart';
 
 class MyAppointmentsPage extends StatelessWidget {
   const MyAppointmentsPage({super.key});
@@ -186,11 +187,59 @@ class _AppointmentCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: isPast ? Colors.grey[300] : Colors.blue[100],
-                      child: Icon(
-                        Icons.person,
-                        size: 30,
-                        color: isPast ? Colors.grey[600] : Colors.blue[700],
+                      backgroundColor: Colors.grey[200],
+                      child: ClipOval(
+                        child: doctor?.profileImageUrl != null &&
+                                doctor!.profileImageUrl!.isNotEmpty
+                            ? Image.network(
+                                doctor!.profileImageUrl!,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  // Si falla la red, usar imagen local
+                                  return Image.asset(
+                                    DoctorPhotoHelper.getDoctorPhotoPath(
+                                        doctor?.photoNumber),
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.person,
+                                        size: 30,
+                                        color: isPast
+                                            ? Colors.grey[600]
+                                            : Colors.blue[700],
+                                      );
+                                    },
+                                  );
+                                },
+                              )
+                            : doctor != null
+                                ? Image.asset(
+                                    DoctorPhotoHelper.getDoctorPhotoPath(
+                                        doctor!.photoNumber),
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.person,
+                                        size: 30,
+                                        color: isPast
+                                            ? Colors.grey[600]
+                                            : Colors.blue[700],
+                                      );
+                                    },
+                                  )
+                                : Icon(
+                                    Icons.person,
+                                    size: 30,
+                                    color: isPast
+                                        ? Colors.grey[600]
+                                        : Colors.blue[700],
+                                  ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -274,10 +323,6 @@ class _AppointmentCard extends StatelessWidget {
                   children: [
                     Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 8),
-                    Text(
-                      '${appointment.startTime} (${appointment.durationHours} ${appointment.durationHours == 1 ? 'hora' : 'horas'})',
-                      style: const TextStyle(fontSize: 14),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

@@ -22,6 +22,8 @@ class Doctor {
   final int? followUpFee;
   final int consultationMinutes;
   final bool isApolloDoctor;
+  final String appointmentType; // 'online' o 'presencial'
+  final int? photoNumber; // 1-5 para seleccionar foto de assets/photos
 
   Doctor({
     required this.id,
@@ -43,6 +45,8 @@ class Doctor {
     this.followUpFee,
     this.consultationMinutes = 15,
     this.isApolloDoctor = false,
+    this.appointmentType = 'presencial',
+    this.photoNumber,
   });
 
   Map<String, dynamic> toMap() {
@@ -65,6 +69,8 @@ class Doctor {
       'followUpFee': followUpFee,
       'consultationMinutes': consultationMinutes,
       'isApolloDoctor': isApolloDoctor,
+      'appointmentType': appointmentType,
+      'photoNumber': photoNumber,
     };
   }
 
@@ -89,6 +95,8 @@ class Doctor {
       followUpFee: map['followUpFee'],
       consultationMinutes: map['consultationMinutes'] ?? 15,
       isApolloDoctor: map['isApolloDoctor'] ?? false,
+      appointmentType: map['appointmentType'] ?? 'presencial',
+      photoNumber: map['photoNumber'],
     );
   }
 }

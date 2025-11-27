@@ -1,26 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/doctor.dart';
+import '../utils/doctor_photo_helper.dart';
 import 'appointment_booking_page.dart';
 
 class DoctorDetailPage extends StatelessWidget {
   final Doctor doctor;
 
   const DoctorDetailPage({super.key, required this.doctor});
-
-  // Lista de imágenes por defecto disponibles
-  static const List<String> _defaultDoctorImages = [
-    'assets/photos/0868a03e801b077b8cdfa5b164fe2a08_medium_square.jpg',
-    'assets/photos/32d4f7b7-5d21-4250-973c-1f621051c500_medium_square.jpg',
-    'assets/photos/976f14d7-bda9-41e1-94dc-89b4f5f14efa_medium_square.jpg',
-    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5.jpeg',
-    'assets/photos/e10cc9d0d8671ebb7ea12d22badd52f5_140_square.jpg',
-  ];
-
-  // Obtener imagen por defecto según el ID del doctor
-  String _getDefaultDoctorImage(String doctorId) {
-    final index = doctorId.hashCode.abs() % _defaultDoctorImages.length;
-    return _defaultDoctorImages[index];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,26 +54,32 @@ class DoctorDetailPage extends StatelessWidget {
                             ],
                           ),
                           child: ClipOval(
-                            child: doctor.profileImageUrl != null && doctor.profileImageUrl!.isNotEmpty
+                            child: doctor.profileImageUrl != null &&
+                                    doctor.profileImageUrl!.isNotEmpty
                                 ? Image.network(
                                     doctor.profileImageUrl!,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      // Si falla la carga de la red, usar imagen por defecto
+                                      // Si falla la carga de la red, usar imagen local
                                       return Image.asset(
-                                        _getDefaultDoctorImage(doctor.id),
+                                        DoctorPhotoHelper.getDoctorPhotoPath(
+                                            doctor.photoNumber),
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Icon(Icons.person, size: 70, color: Colors.grey[400]);
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Icon(Icons.person,
+                                              size: 70, color: Colors.grey[400]);
                                         },
                                       );
                                     },
                                   )
                                 : Image.asset(
-                                    _getDefaultDoctorImage(doctor.id),
+                                    DoctorPhotoHelper.getDoctorPhotoPath(
+                                        doctor.photoNumber),
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      return Icon(Icons.person, size: 70, color: Colors.grey[400]);
+                                      return Icon(Icons.person,
+                                          size: 70, color: Colors.grey[400]);
                                     },
                                   ),
                           ),

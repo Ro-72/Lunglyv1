@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/doctor.dart';
+import '../../utils/doctor_photo_helper.dart';
 import 'doctor_profile_detail_page.dart';
 
 class DoctorProfileViewPage extends StatefulWidget {
@@ -53,11 +54,6 @@ class _DoctorProfileViewPageState extends State<DoctorProfileViewPage> {
     } finally {
       setState(() => _isLoading = false);
     }
-  }
-
-  String _getDefaultDoctorImage(String doctorId) {
-    // Lógica para obtener imagen por defecto según el ID del doctor
-    return 'assets/images/default_doctor.png';
   }
 
   @override
@@ -152,17 +148,32 @@ class _DoctorProfileViewPageState extends State<DoctorProfileViewPage> {
                                 doctor.profileImageUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
+                                  // Si falla la carga de la red, usar imagen local
+                                  return Image.asset(
+                                    DoctorPhotoHelper.getDoctorPhotoPath(
+                                        doctor.photoNumber),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: Colors.grey[400],
+                                      );
+                                    },
+                                  );
+                                },
+                              )
+                            : Image.asset(
+                                DoctorPhotoHelper.getDoctorPhotoPath(
+                                    doctor.photoNumber),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
                                   return Icon(
                                     Icons.person,
                                     size: 50,
                                     color: Colors.grey[400],
                                   );
                                 },
-                              )
-                            : Icon(
-                                Icons.person,
-                                size: 50,
-                                color: Colors.grey[400],
                               ),
                       ),
                     ),

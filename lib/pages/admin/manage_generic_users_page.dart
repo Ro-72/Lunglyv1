@@ -4,7 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
 
 class ManageGenericUsersPage extends StatefulWidget {
-  const ManageGenericUsersPage({super.key});
+  final bool returnToDrawer;
+
+  const ManageGenericUsersPage({
+    super.key,
+    this.returnToDrawer = false,
+  });
 
   @override
   State<ManageGenericUsersPage> createState() => _ManageGenericUsersPageState();
@@ -117,11 +122,15 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
   Future<void> _createRandomDoctorProfile(String userId) async {
     final random = Random();
 
-    // Nombres peruanos comunes
-    final nombres = [
-      'Carlos', 'María', 'José', 'Ana', 'Luis', 'Carmen', 'Pedro', 'Rosa',
-      'Miguel', 'Isabel', 'Francisco', 'Elena', 'Antonio', 'Sofía', 'Manuel',
-      'Patricia', 'Jorge', 'Lucía', 'Ricardo', 'Claudia'
+    // Nombres masculinos y femeninos peruanos comunes
+    final nombresMasculinos = [
+      'Carlos', 'José', 'Luis', 'Pedro', 'Miguel', 'Francisco', 'Antonio',
+      'Manuel', 'Jorge', 'Ricardo', 'Alberto', 'Julio', 'Roberto', 'Raúl'
+    ];
+
+    final nombresFemeninos = [
+      'María', 'Ana', 'Carmen', 'Rosa', 'Isabel', 'Elena', 'Sofía',
+      'Patricia', 'Lucía', 'Claudia', 'Gabriela', 'Andrea', 'Mónica', 'Julia'
     ];
 
     // Apellidos peruanos comunes
@@ -157,9 +166,9 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
     // Calificaciones médicas
     final qualificationsBySpecialty = [
       ['Médico Cirujano', 'Neumología', 'FCCP'],
-      ['Médico Cirujano', 'Especialista en Neumología', 'Magíster en Medicina'],
-      ['Médico Cirujano', 'Neumología Pediátrica', 'DNB'],
-      ['Médico Cirujano', 'Cardiología', 'FACP'],
+      ['Médico Cirujano', 'Neumología', 'Magíster en Medicina'],
+      ['Médico Cirujano', 'Neumología', 'DNB'],
+      ['Médico Cirujano', 'Neumología', 'FACP'],
       ['Médico Cirujano', 'Medicina Interna'],
     ];
 
@@ -169,20 +178,10 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
         'Experto en el diagnóstico y tratamiento de patologías pulmonares crónicas y agudas.',
         'Médico especializado en cuidado respiratorio con enfoque en medicina preventiva y rehabilitación pulmonar.',
       ],
-      'Cardiología': [
-        'Cardiólogo con especialización en prevención y tratamiento de enfermedades cardiovasculares.',
-        'Experto en arritmias cardíacas e insuficiencia cardíaca con tecnología de vanguardia.',
-        'Especialista en hipertensión arterial y rehabilitación cardíaca con enfoque integral.',
-      ],
       'Medicina General': [
         'Médico general con enfoque integral en la salud del paciente y medicina preventiva.',
         'Especialista en atención primaria con amplia experiencia en diagnóstico y tratamiento.',
         'Médico familiar dedicado al cuidado integral de pacientes de todas las edades.',
-      ],
-      'Pediatría': [
-        'Pediatra especializado en el cuidado integral de niños y adolescentes.',
-        'Experto en desarrollo infantil y enfermedades pediátricas comunes.',
-        'Médico pediatra con enfoque en medicina preventiva y vacunación infantil.',
       ],
     };
 
@@ -190,6 +189,14 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
       random.nextInt(especialidadesConDescripciones.length)
     );
 
+    // Determinar género basado en la foto (1-2: mujer, 3-5: hombre)
+    final isFemale = random.nextBool();
+    final photoNumber = isFemale
+        ? random.nextInt(2) + 1  // 1 o 2 para mujeres
+        : random.nextInt(3) + 3; // 3, 4 o 5 para hombres
+
+    // Seleccionar nombre según el género
+    final nombres = isFemale ? nombresFemeninos : nombresMasculinos;
     final nombre = '${nombres[random.nextInt(nombres.length)]} ${apellidos[random.nextInt(apellidos.length)]}';
     final titulo = titulos[random.nextInt(titulos.length)];
     final descripcion = especialidadesConDescripciones[especialidad]![
@@ -218,6 +225,9 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
 
     final followUpFee = (precio * 0.6).round(); // 60% del precio de consulta
 
+    // Tipo de cita (online o presencial)
+    final appointmentType = random.nextBool() ? 'online' : 'presencial';
+
     // Crear perfil de doctor en Firestore
     await _firestore.collection('doctors').add({
       'userId': userId,
@@ -238,6 +248,8 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
       'patientCount': patientCount,
       'consultationMinutes': consultationMinutes,
       'isApolloDoctor': isApolloDoctor,
+      'appointmentType': appointmentType,
+      'photoNumber': photoNumber,
       'profileImageUrl': null,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -306,12 +318,25 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gestionar Usuarios Genéricos'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
+    return WillPopScope(
+      onWillPop: () async {
+        if (widget.returnToDrawer) {
+          Navigator.pop(context, true); // Indica que debe abrir el drawer
+        }
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Gestionar Usuarios Genéricos'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context, widget.returnToDrawer);
+            },
+          ),
+        ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -502,14 +527,15 @@ class _ManageGenericUsersPageState extends State<ManageGenericUsersPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isCreating ? null : _createGenericUserWithRandomNumber,
-        icon: const Icon(Icons.shuffle),
-        label: Text(_selectedRole == 'medico'
-          ? 'Médico Aleatorio'
-          : 'Paciente Aleatorio'),
-        backgroundColor: _isCreating ? Colors.grey : Colors.orange,
-        tooltip: 'Crear usuario genérico con número aleatorio',
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _isCreating ? null : _createGenericUserWithRandomNumber,
+          icon: const Icon(Icons.shuffle),
+          label: Text(_selectedRole == 'medico'
+            ? 'Médico Aleatorio'
+            : 'Paciente Aleatorio'),
+          backgroundColor: _isCreating ? Colors.grey : Colors.orange,
+          tooltip: 'Crear usuario genérico con número aleatorio',
+        ),
       ),
     );
   }

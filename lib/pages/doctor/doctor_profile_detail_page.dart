@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/doctor.dart';
+import '../../utils/doctor_photo_helper.dart';
 
 class DoctorProfileDetailPage extends StatelessWidget {
   final Doctor doctor;
@@ -8,18 +9,6 @@ class DoctorProfileDetailPage extends StatelessWidget {
     super.key,
     required this.doctor,
   });
-
-  final List<String> _defaultDoctorImages = const [
-    'assets/images/doctor1.jpg',
-    'assets/images/doctor2.jpg',
-    'assets/images/doctor3.jpg',
-  ];
-
-  // Obtener imagen por defecto según el ID del doctor
-  String _getDefaultDoctorImage(String doctorId) {
-    final index = doctorId.hashCode.abs() % _defaultDoctorImages.length;
-    return _defaultDoctorImages[index];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +63,28 @@ class DoctorProfileDetailPage extends StatelessWidget {
                                     doctor.profileImageUrl!,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
+                                      // Si falla la carga de la red, usar imagen local
+                                      return Image.asset(
+                                        DoctorPhotoHelper.getDoctorPhotoPath(
+                                            doctor.photoNumber),
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Icon(Icons.person,
+                                              size: 70, color: Colors.grey[400]);
+                                        },
+                                      );
+                                    },
+                                  )
+                                : Image.asset(
+                                    DoctorPhotoHelper.getDoctorPhotoPath(
+                                        doctor.photoNumber),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
                                       return Icon(Icons.person,
                                           size: 70, color: Colors.grey[400]);
                                     },
-                                  )
-                                : Icon(Icons.person,
-                                    size: 70, color: Colors.grey[400]),
+                                  ),
                           ),
                         ),
                         if (doctor.isApolloDoctor)

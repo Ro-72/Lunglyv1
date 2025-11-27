@@ -25,6 +25,7 @@ class DoctorHomeWrapper extends StatefulWidget {
 class _DoctorHomeWrapperState extends State<DoctorHomeWrapper> {
   int _currentIndex = 0;
   final _authService = AuthService();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _pages = [
     const DoctorHomePage(),
@@ -41,6 +42,7 @@ class _DoctorHomeWrapperState extends State<DoctorHomeWrapper> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -126,12 +128,18 @@ class _DoctorHomeWrapperState extends State<DoctorHomeWrapper> {
                 ),
                 onTap: () async {
                   Navigator.pop(context);
-                  await Navigator.push(
+                  final shouldOpenDrawer = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ManageGenericUsersPage(),
+                      builder: (context) => const ManageGenericUsersPage(returnToDrawer: true),
                     ),
                   );
+
+                  // Si debe abrir el drawer, esperar un momento y abrirlo
+                  if (shouldOpenDrawer == true && mounted) {
+                    await Future.delayed(const Duration(milliseconds: 100));
+                    _scaffoldKey.currentState?.openDrawer();
+                  }
                 },
               ),
               const Divider(),
