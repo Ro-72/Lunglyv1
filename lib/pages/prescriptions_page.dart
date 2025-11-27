@@ -40,7 +40,6 @@ class PrescriptionsPage extends StatelessWidget {
             .doc(user.uid)
             .collection('medical_records')
             .where('prescription', isNull: false)
-            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -90,6 +89,7 @@ class PrescriptionsPage extends StatelessWidget {
               return _PrescriptionCard(
                 recordId: recordDoc.id,
                 recordData: recordData,
+                userId: user.uid,
               );
             },
           );
@@ -102,17 +102,19 @@ class PrescriptionsPage extends StatelessWidget {
 class _PrescriptionCard extends StatelessWidget {
   final String recordId;
   final Map<String, dynamic> recordData;
+  final String userId;
 
   const _PrescriptionCard({
     required this.recordId,
     required this.recordData,
+    required this.userId,
   });
 
   @override
   Widget build(BuildContext context) {
     final prescription = recordData['prescription'] as List<dynamic>? ?? [];
     final appointmentDate = recordData['appointmentDate'] as Timestamp?;
-    final alreadyStarted = recordData['treatmentStarted'] as bool? ?? false;
+    final treatmentStarted = recordData['treatmentStarted'] as bool? ?? false;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -130,12 +132,12 @@ class _PrescriptionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: alreadyStarted ? Colors.grey[300] : Colors.purple[100],
+                    color: treatmentStarted ? Colors.grey[300] : Colors.purple[100],
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.medication,
-                    color: alreadyStarted ? Colors.grey[600] : Colors.purple[700],
+                    color: treatmentStarted ? Colors.grey[600] : Colors.purple[700],
                     size: 24,
                   ),
                 ),
@@ -163,7 +165,7 @@ class _PrescriptionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (alreadyStarted)
+                if (treatmentStarted)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -250,22 +252,20 @@ class _PrescriptionCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         medicine['description'],
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                       ),
                     ],
                   ],
                 ),
               );
             }).toList(),
-            if (!alreadyStarted) ...[
+            if (!treatmentStarted) ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _startTreatment(context, prescription, recordId),
+                  onPressed: () =>
+                      _startTreatment(context, prescription, recordId),
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Iniciar Tratamiento'),
                   style: ElevatedButton.styleFrom(
@@ -305,9 +305,6 @@ class _PrescriptionCard extends StatelessWidget {
     List<dynamic> prescription,
     String recordId,
   ) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -335,14 +332,15 @@ class _PrescriptionCard extends StatelessWidget {
     if (confirmed != true) return;
 
     try {
-      // Convertir medicamentos de la receta a Medication objects
+      // Convertir todos los medicamentos de la receta a Medication objects
       final medications = prescription.map((med) {
         final medicine = med as Map<String, dynamic>;
         final frequency = medicine['frequency'] as String? ?? 'Cada 8 horas';
         final durationDays = medicine['durationDays'] as int? ?? 7;
 
         return Medication(
-          id: DateTime.now().millisecondsSinceEpoch.toString() + medicine['name'].hashCode.toString(),
+          id: DateTime.now().millisecondsSinceEpoch.toString() +
+              medicine['name'].hashCode.toString(),
           name: medicine['name'] ?? '',
           dosage: medicine['dose'].toString(),
           frequency: frequency,
@@ -351,13 +349,13 @@ class _PrescriptionCard extends StatelessWidget {
         );
       }).toList();
 
-      // Crear el tratamiento
+      // Crear un tratamiento conjunto con todos los medicamentos
       final treatment = Treatment(
         id: '',
         name: 'Receta Médica - ${_formatDate(DateTime.now())}',
-        description: 'Tratamiento basado en receta médica',
+        description: 'Tratamiento basado en receta médica con ${medications.length} medicamento(s)',
         medications: medications,
-        userId: user.uid,
+        userId: userId,
       );
 
       // Guardar en Firebase
@@ -368,15 +366,15 @@ class _PrescriptionCard extends StatelessWidget {
       // Marcar la receta como iniciada
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(userId)
           .collection('medical_records')
           .doc(recordId)
           .update({'treatmentStarted': true});
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tratamiento iniciado exitosamente'),
+          SnackBar(
+            content: Text('Tratamiento iniciado con ${medications.length} medicamento(s)'),
             backgroundColor: Colors.green,
           ),
         );

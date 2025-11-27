@@ -323,6 +323,10 @@ class _AppointmentCard extends StatelessWidget {
                   children: [
                     Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 8),
+                    Text(
+                      '${appointment.startTime} ',
+                      style: const TextStyle(fontSize: 14),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

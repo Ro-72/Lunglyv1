@@ -832,29 +832,36 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   ) async {
     final result = await showDialog<List<Map<String, dynamic>>>(
       context: context,
-      builder: (context) => _AddPrescriptionDialog(patientName: patientName),
+      builder: (context) => _AddPrescriptionDialog(
+        patientName: patientName,
+        doctorId: _doctorId!,
+        patientId: patientId,
+      ),
     );
 
     if (result != null && result.isNotEmpty) {
       try {
-        final appointmentDoc = await _firestore
-            .collection('appointments')
-            .doc(appointmentId)
-            .get();
-        final appointmentData = appointmentDoc.data();
-
-        await _firestore
-            .collection('users')
-            .doc(patientId)
-            .collection('medical_records')
-            .add({
-          'appointmentId': appointmentId,
-          'doctorId': _doctorId,
-          'prescription': result,
-          'createdAt': FieldValue.serverTimestamp(),
-          'appointmentDate': appointmentData?['appointmentDate'],
-          'medicalHistory': '',
-        });
+        // Guardar cada medicamento como una receta individual en la colección prescriptions
+        for (var med in result) {
+          final prescriptionId = DateTime.now().millisecondsSinceEpoch.toString() + med['name'].hashCode.toString();
+          
+          await _firestore
+              .collection('prescriptions')
+              .doc(prescriptionId)
+              .set({
+            'id': prescriptionId,
+            'appointmentId': appointmentId,
+            'doctorId': _doctorId,
+            'patientId': patientId,
+            'medicineName': med['name'] ?? '',
+            'dosage': med['dose'] ?? '',
+            'frequency': med['frequency'] ?? 'Diario',
+            'durationDays': med['durationDays'] ?? 7,
+            'description': med['description'],
+            'createdAt': FieldValue.serverTimestamp(),
+            'isActive': true,
+          });
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -934,8 +941,14 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 // Dialog para agregar receta médica con múltiples medicamentos
 class _AddPrescriptionDialog extends StatefulWidget {
   final String patientName;
+  final String doctorId;
+  final String patientId;
 
-  const _AddPrescriptionDialog({required this.patientName});
+  const _AddPrescriptionDialog({
+    required this.patientName,
+    required this.doctorId,
+    required this.patientId,
+  });
 
   @override
   State<_AddPrescriptionDialog> createState() => _AddPrescriptionDialogState();
