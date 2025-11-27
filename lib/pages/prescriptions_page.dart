@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/treatment.dart';
-import '../models/medication.dart';
 
 class PrescriptionsPage extends StatelessWidget {
   const PrescriptionsPage({super.key});
@@ -36,10 +35,9 @@ class PrescriptionsPage extends StatelessWidget {
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('medical_records')
-            .where('prescription', isNull: false)
+            .collection('treatments')
+            .where('userId', isEqualTo: user.uid)
+            .where('isPrescription', isEqualTo: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -50,14 +48,11 @@ class PrescriptionsPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final records = snapshot.data?.docs ?? [];
-          final prescriptions = records.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final prescription = data['prescription'] as List<dynamic>?;
-            return prescription != null && prescription.isNotEmpty;
-          }).toList();
+          final treatments = snapshot.data?.docs
+              .map((doc) => Treatment.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+              .toList() ?? [];
 
-          if (prescriptions.isEmpty) {
+          if (treatments.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -82,14 +77,11 @@ class PrescriptionsPage extends StatelessWidget {
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: prescriptions.length,
+            itemCount: treatments.length,
             itemBuilder: (context, index) {
-              final recordDoc = prescriptions[index];
-              final recordData = recordDoc.data() as Map<String, dynamic>;
+              final treatment = treatments[index];
               return _PrescriptionCard(
-                recordId: recordDoc.id,
-                recordData: recordData,
-                userId: user.uid,
+                treatment: treatment,
               );
             },
           );
@@ -100,27 +92,22 @@ class PrescriptionsPage extends StatelessWidget {
 }
 
 class _PrescriptionCard extends StatelessWidget {
-  final String recordId;
-  final Map<String, dynamic> recordData;
-  final String userId;
+  final Treatment treatment;
 
   const _PrescriptionCard({
-    required this.recordId,
-    required this.recordData,
-    required this.userId,
+    required this.treatment,
   });
 
   @override
   Widget build(BuildContext context) {
-    final prescription = recordData['prescription'] as List<dynamic>? ?? [];
-    final appointmentDate = recordData['appointmentDate'] as Timestamp?;
-    final treatmentStarted = recordData['treatmentStarted'] as bool? ?? false;
+    final alreadyActivated = treatment.prescriptionActivated;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.purple.shade200, width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -132,12 +119,12 @@ class _PrescriptionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: treatmentStarted ? Colors.grey[300] : Colors.purple[100],
+                    color: alreadyActivated ? Colors.grey[300] : Colors.purple[100],
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.medication,
-                    color: treatmentStarted ? Colors.grey[600] : Colors.purple[700],
+                    color: alreadyActivated ? Colors.grey[600] : Colors.purple[700],
                     size: 24,
                   ),
                 ),
@@ -147,25 +134,24 @@ class _PrescriptionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Receta Médica',
+                        treatment.name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      if (appointmentDate != null)
-                        Text(
-                          _formatDate(appointmentDate.toDate()),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
+                      Text(
+                        '${treatment.medications.length} medicamento${treatment.medications.length != 1 ? "s" : ""}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
                         ),
+                      ),
                     ],
                   ),
                 ),
-                if (treatmentStarted)
+                if (alreadyActivated)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -173,7 +159,7 @@ class _PrescriptionCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'En tratamiento',
+                      'Activado',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -192,8 +178,7 @@ class _PrescriptionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...prescription.map((med) {
-              final medicine = med as Map<String, dynamic>;
+            ...treatment.medications.map((med) {
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
@@ -209,7 +194,7 @@ class _PrescriptionCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            medicine['name'] ?? '',
+                            med.name,
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -226,7 +211,7 @@ class _PrescriptionCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            medicine['dose'].toString(),
+                            med.dosage,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.white,
@@ -236,38 +221,27 @@ class _PrescriptionCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (medicine['frequency'] != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '${medicine['frequency']} durante ${medicine['durationDays']} días',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w500,
-                        ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${med.frequency} durante ${med.durationDays} días',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
-                    if (medicine['description'] != null &&
-                        medicine['description'].toString().isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        medicine['description'],
-                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
               );
-            }).toList(),
-            if (!treatmentStarted) ...[
+            }),
+            if (!alreadyActivated) ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () =>
-                      _startTreatment(context, prescription, recordId),
+                  onPressed: () => _activateTreatment(context),
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('Iniciar Tratamiento'),
+                  label: const Text('Activar Tratamiento'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
                     foregroundColor: Colors.white,
@@ -282,36 +256,14 @@ class _PrescriptionCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    const months = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre'
-    ];
-    return '${date.day} de ${months[date.month - 1]} ${date.year}';
-  }
-
-  Future<void> _startTreatment(
-    BuildContext context,
-    List<dynamic> prescription,
-    String recordId,
-  ) async {
+  Future<void> _activateTreatment(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Iniciar Tratamiento'),
+        title: const Text('Activar Tratamiento'),
         content: const Text(
-          '¿Deseas iniciar el seguimiento de este tratamiento?\n\n'
-          'Se creará un nuevo tratamiento activo con todos los medicamentos de esta receta.',
+          '¿Deseas activar el seguimiento de este tratamiento?\n\n'
+          'El tratamiento aparecerá en tu lista de tratamientos activos.',
         ),
         actions: [
           TextButton(
@@ -323,7 +275,7 @@ class _PrescriptionCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.purple,
             ),
-            child: const Text('Iniciar'),
+            child: const Text('Activar'),
           ),
         ],
       ),
@@ -332,49 +284,15 @@ class _PrescriptionCard extends StatelessWidget {
     if (confirmed != true) return;
 
     try {
-      // Convertir todos los medicamentos de la receta a Medication objects
-      final medications = prescription.map((med) {
-        final medicine = med as Map<String, dynamic>;
-        final frequency = medicine['frequency'] as String? ?? 'Cada 8 horas';
-        final durationDays = medicine['durationDays'] as int? ?? 7;
-
-        return Medication(
-          id: DateTime.now().millisecondsSinceEpoch.toString() +
-              medicine['name'].hashCode.toString(),
-          name: medicine['name'] ?? '',
-          dosage: medicine['dose'].toString(),
-          frequency: frequency,
-          durationDays: durationDays,
-          nextDose: DateTime.now().add(_getFrequencyDuration(frequency)),
-        );
-      }).toList();
-
-      // Crear un tratamiento conjunto con todos los medicamentos
-      final treatment = Treatment(
-        id: '',
-        name: 'Receta Médica - ${_formatDate(DateTime.now())}',
-        description: 'Tratamiento basado en receta médica con ${medications.length} medicamento(s)',
-        medications: medications,
-        userId: userId,
-      );
-
-      // Guardar en Firebase
       await FirebaseFirestore.instance
           .collection('treatments')
-          .add(treatment.toMap());
-
-      // Marcar la receta como iniciada
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('medical_records')
-          .doc(recordId)
-          .update({'treatmentStarted': true});
+          .doc(treatment.id)
+          .update({'prescriptionActivated': true});
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Tratamiento iniciado con ${medications.length} medicamento(s)'),
+          const SnackBar(
+            content: Text('Tratamiento activado exitosamente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -383,25 +301,11 @@ class _PrescriptionCard extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al iniciar tratamiento: $e'),
+            content: Text('Error al activar tratamiento: $e'),
             backgroundColor: Colors.red,
           ),
         );
       }
-    }
-  }
-
-  Duration _getFrequencyDuration(String frequency) {
-    switch (frequency) {
-      case 'Cada 6 horas':
-        return const Duration(hours: 6);
-      case 'Cada 8 horas':
-        return const Duration(hours: 8);
-      case 'Cada 12 horas':
-        return const Duration(hours: 12);
-      case 'Diario':
-      default:
-        return const Duration(hours: 24);
     }
   }
 }

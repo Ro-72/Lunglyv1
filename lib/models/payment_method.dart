@@ -1,17 +1,47 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 
 enum PaymentType {
   creditCard,
   paypal,
   bankTransfer,
+  yape,
+}
+
+extension PaymentTypeExtension on PaymentType {
+  String get displayName {
+    switch (this) {
+      case PaymentType.creditCard:
+        return 'Tarjeta de Crédito';
+      case PaymentType.paypal:
+        return 'PayPal';
+      case PaymentType.bankTransfer:
+        return 'Transferencia Bancaria';
+      case PaymentType.yape:
+        return 'Yape';
+    }
+  }
+
+  String get shortName {
+    switch (this) {
+      case PaymentType.creditCard:
+        return 'creditCard';
+      case PaymentType.paypal:
+        return 'paypal';
+      case PaymentType.bankTransfer:
+        return 'bankTransfer';
+      case PaymentType.yape:
+        return 'yape';
+    }
+  }
 }
 
 class PaymentMethod {
   final String id;
   final String userId;
   final PaymentType type;
-  final String name; // Nombre del método (ej: "Visa **** 1234")
-  final Map<String, dynamic> details; // Detalles específicos del método
+  final String name;
+  final Map<String, dynamic> details;
   final bool isDefault;
   final DateTime createdAt;
 
@@ -25,28 +55,32 @@ class PaymentMethod {
     required this.createdAt,
   });
 
+  String getTypeString() => type.displayName;
+
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
-      'type': type.toString().split('.').last,
+      'type': type.shortName,
       'name': name,
       'details': details,
       'isDefault': isDefault,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
   factory PaymentMethod.fromMap(Map<String, dynamic> map, String id) {
+    final typeString = map['type'] as String? ?? 'creditCard';
     PaymentType type;
-    switch (map['type']) {
-      case 'creditCard':
-        type = PaymentType.creditCard;
-        break;
+    
+    switch (typeString) {
       case 'paypal':
         type = PaymentType.paypal;
         break;
       case 'bankTransfer':
         type = PaymentType.bankTransfer;
+        break;
+      case 'yape':
+        type = PaymentType.yape;
         break;
       default:
         type = PaymentType.creditCard;
@@ -59,19 +93,8 @@ class PaymentMethod {
       name: map['name'] ?? '',
       details: Map<String, dynamic>.from(map['details'] ?? {}),
       isDefault: map['isDefault'] ?? false,
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: DateTime.parse(map['createdAt'] ?? DateTime.now().toIso8601String()),
     );
-  }
-
-  String getTypeString() {
-    switch (type) {
-      case PaymentType.creditCard:
-        return 'Tarjeta de Crédito';
-      case PaymentType.paypal:
-        return 'PayPal';
-      case PaymentType.bankTransfer:
-        return 'Transferencia Bancaria';
-    }
   }
 
   String getIconName() {
@@ -82,6 +105,8 @@ class PaymentMethod {
         return 'paypal';
       case PaymentType.bankTransfer:
         return 'account_balance';
+      case PaymentType.yape:
+        return 'yape';
     }
   }
 }

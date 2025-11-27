@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'appointment_detail_page.dart';
+import '../../models/treatment.dart';
+import '../../models/medication.dart';
 
 class DoctorHomePage extends StatefulWidget {
   const DoctorHomePage({super.key});
@@ -841,27 +843,36 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
     if (result != null && result.isNotEmpty) {
       try {
-        // Guardar cada medicamento como una receta individual en la colección prescriptions
-        for (var med in result) {
-          final prescriptionId = DateTime.now().millisecondsSinceEpoch.toString() + med['name'].hashCode.toString();
-          
-          await _firestore
-              .collection('prescriptions')
-              .doc(prescriptionId)
-              .set({
-            'id': prescriptionId,
-            'appointmentId': appointmentId,
-            'doctorId': _doctorId,
-            'patientId': patientId,
-            'medicineName': med['name'] ?? '',
-            'dosage': med['dose'] ?? '',
-            'frequency': med['frequency'] ?? 'Diario',
-            'durationDays': med['durationDays'] ?? 7,
-            'description': med['description'],
-            'createdAt': FieldValue.serverTimestamp(),
-            'isActive': true,
-          });
-        }
+        // Convertir medicamentos de la receta a Medication objects
+        final medications = result.map((med) {
+          final frequency = med['frequency'] as String? ?? 'Cada 8 horas';
+          final durationDays = med['durationDays'] as int? ?? 7;
+
+          return Medication(
+            id: DateTime.now().millisecondsSinceEpoch.toString() + med['name'].hashCode.toString(),
+            name: med['name'] ?? '',
+            dosage: med['dose'].toString(),
+            frequency: frequency,
+            durationDays: durationDays,
+            nextDose: DateTime.now().add(_getFrequencyDuration(frequency)),
+          );
+        }).toList();
+
+        // Crear el tratamiento (receta)
+        final treatment = Treatment(
+          id: '',
+          name: 'Receta Médica - ${_formatDate(DateTime.now())}',
+          description: 'Receta médica del doctor',
+          medications: medications,
+          userId: patientId,
+          isPrescription: true,
+          prescriptionActivated: false,
+        );
+
+        // Guardar en Firebase
+        await _firestore
+            .collection('treatments')
+            .add(treatment.toMap());
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -934,6 +945,28 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           ),
         );
       }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return '${date.day} de ${months[date.month - 1]} ${date.year}';
+  }
+
+  Duration _getFrequencyDuration(String frequency) {
+    switch (frequency) {
+      case 'Cada 6 horas':
+        return const Duration(hours: 6);
+      case 'Cada 8 horas':
+        return const Duration(hours: 8);
+      case 'Cada 12 horas':
+        return const Duration(hours: 12);
+      case 'Diario':
+      default:
+        return const Duration(hours: 24);
     }
   }
 }

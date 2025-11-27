@@ -96,6 +96,9 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
       case PaymentType.bankTransfer:
         icon = Icons.account_balance;
         break;
+      case PaymentType.yape:
+        icon = Icons.phone_android;
+        break;
     }
 
     return Card(
@@ -229,6 +232,23 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildAddMethodCard(
+                icon: Icons.phone_android,
+                title: 'Yape',
+                type: PaymentType.yape,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Container()),
+            const SizedBox(width: 12),
+            Expanded(child: Container()),
+          ],
+        ),
       ],
     );
   }
@@ -237,6 +257,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
     required IconData icon,
     required String title,
     required PaymentType type,
+    Color color = const Color(0xFF0066FF),
   }) {
     return InkWell(
       onTap: () => _addPaymentMethod(type),
@@ -246,7 +267,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Icon(icon, size: 32, color: Colors.blue[700]),
+              Icon(icon, size: 32, color: color),
               const SizedBox(height: 8),
               Text(
                 title,
@@ -445,6 +466,68 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                         return null;
                       },
                       onSaved: (value) => details['accountHolder'] = value!,
+                    ),
+                  ] else if (type == PaymentType.yape) ...[
+                    TextFormField(
+                      initialValue: details['phoneNumber'],
+                      decoration: const InputDecoration(
+                        labelText: 'Número de Teléfono',
+                        prefixIcon: Icon(Icons.phone),
+                        hintText: '+51 999 000 000',
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresa tu número de teléfono';
+                        }
+                        if (value.length < 9) {
+                          return 'Número inválido';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        details['phoneNumber'] = value!;
+                        nameController.text = 'Yape - $value';
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      initialValue: details['fullName'],
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre Completo',
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresa tu nombre completo';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) => details['fullName'] = value!,
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.green[700], size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Yape es un servicio de transferencia móvil rápida y segura',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],

@@ -755,6 +755,15 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage>
                     () =>
                         Navigator.pop(dialogContext, PaymentType.bankTransfer),
               ),
+              const SizedBox(height: 10),
+              _buildPaymentOption(
+                dialogContext,
+                icon: Icons.phone_android,
+                title: 'Yape',
+                color: Colors.green,
+                onTap:
+                    () => Navigator.pop(dialogContext, PaymentType.yape),
+              ),
             ],
           ),
           actions: [
@@ -777,19 +786,20 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage>
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    Color color = const Color(0xFF0066FF),
   }) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.blue[50],
+          color: color.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue[200]!),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 28, color: Colors.blue[700]),
+            Icon(icon, size: 28, color: color),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -800,7 +810,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage>
                 ),
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.blue[700]),
+            Icon(Icons.chevron_right, color: color),
           ],
         ),
       ),

@@ -498,29 +498,31 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage> {
           title: const Text('Sin receta médica'),
           content: const Text('¿Desea finalizar la cita sin agregar medicinas a la receta?'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Continuar'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Continuar')),
           ],
         ),
       );
-
       if (confirm != true) return;
     }
 
-    setState(() {
-      _isCompletingAppointment = true;
-    });
+    setState(() => _isCompletingAppointment = true);
 
     try {
       final appointmentDoc = await _firestore.collection('appointments').doc(widget.appointmentId).get();
       final appointmentData = appointmentDoc.data()!;
       final patientId = appointmentData['patientId'] as String;
+      final appointmentDate = appointmentData['date'] as Timestamp?;
+
+      // Convertir medicamentos a formato guardable
+      final prescriptionList = _selectedMedicines.map((med) => {
+        'name': med['name'] as String,
+        'dose': med['dose'].toString(),
+        'unit': med['unit'] as String? ?? 'mg',
+        'description': med['description'] as String? ?? '',
+        'frequency': 'Cada 8 horas',
+        'durationDays': 7,
+      }).toList();
 
       // Guardar historial médico y receta
       await _firestore
@@ -531,9 +533,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage> {
         'appointmentId': widget.appointmentId,
         'doctorId': appointmentData['doctorId'],
         'medicalHistory': _medicalHistoryController.text.trim(),
-        'prescription': _selectedMedicines,
+        'prescription': prescriptionList,
         'createdAt': FieldValue.serverTimestamp(),
-        'appointmentDate': appointmentData['appointmentDate'],
+        'appointmentDate': appointmentDate,
+        'treatmentStarted': false,
       });
 
       // Actualizar estado de la cita
@@ -562,9 +565,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage> {
         );
       }
     } finally {
-      setState(() {
-        _isCompletingAppointment = false;
-      });
+      setState(() => _isCompletingAppointment = false);
     }
   }
 }

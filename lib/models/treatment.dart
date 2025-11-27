@@ -10,6 +10,8 @@ class Treatment {
   final String userId;
   final double progress;
   final DateTime createdAt;
+  final bool isPrescription; // Si es una receta médica
+  final bool prescriptionActivated; // Si la receta fue activada por el paciente
 
   // Configuración compartida para todos los medicamentos
   final bool useSharedSettings; // Si todos comparten frecuencia y duración
@@ -25,6 +27,8 @@ class Treatment {
     required this.userId,
     this.progress = 0.0,
     DateTime? createdAt,
+    this.isPrescription = false,
+    this.prescriptionActivated = false,
     this.useSharedSettings = false,
     this.sharedFrequency,
     this.sharedDurationDays,
@@ -39,6 +43,8 @@ class Treatment {
       'userId': userId,
       'progress': progress,
       'createdAt': createdAt,
+      'isPrescription': isPrescription,
+      'prescriptionActivated': prescriptionActivated,
       'useSharedSettings': useSharedSettings,
       'sharedFrequency': sharedFrequency,
       'sharedDurationDays': sharedDurationDays,
@@ -60,6 +66,8 @@ class Treatment {
       createdAt: map['createdAt'] != null
           ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
+      isPrescription: map['isPrescription'] ?? false,
+      prescriptionActivated: map['prescriptionActivated'] ?? false,
       useSharedSettings: map['useSharedSettings'] ?? false,
       sharedFrequency: map['sharedFrequency'],
       sharedDurationDays: map['sharedDurationDays'],
@@ -72,6 +80,8 @@ class Treatment {
     List<Medication>? medications,
     bool? isActive,
     double? progress,
+    bool? isPrescription,
+    bool? prescriptionActivated,
     bool? useSharedSettings,
     String? sharedFrequency,
     int? sharedDurationDays,
@@ -85,6 +95,8 @@ class Treatment {
       userId: userId,
       progress: progress ?? this.progress,
       createdAt: createdAt,
+      isPrescription: isPrescription ?? this.isPrescription,
+      prescriptionActivated: prescriptionActivated ?? this.prescriptionActivated,
       useSharedSettings: useSharedSettings ?? this.useSharedSettings,
       sharedFrequency: sharedFrequency ?? this.sharedFrequency,
       sharedDurationDays: sharedDurationDays ?? this.sharedDurationDays,

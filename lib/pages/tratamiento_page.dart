@@ -155,9 +155,19 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final treatments = snapshot.data?.docs
+          final allTreatments = snapshot.data?.docs
               .map((doc) => Treatment.fromMap(doc.data() as Map<String, dynamic>, doc.id))
               .toList() ?? [];
+
+          // Filtrar solo tratamientos activados (no recetas sin activar)
+          final treatments = allTreatments.where((t) =>
+            !t.isPrescription || t.prescriptionActivated
+          ).toList();
+
+          // Recetas no activadas
+          final prescriptions = allTreatments.where((t) =>
+            t.isPrescription && !t.prescriptionActivated
+          ).toList();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -199,6 +209,25 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // Recetas Pendientes
+                if (prescriptions.isNotEmpty) ...[
+                  Text(
+                    'Recetas Médicas',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ...prescriptions.map(
+                    (prescription) => _buildPrescriptionCard(
+                      context,
+                      prescription,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
                 Text(
                   'Tratamientos Activos',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -474,6 +503,110 @@ class _TratamientoPageContentState extends State<TratamientoPageContent> {
       onDelete: () => _deleteTreatment(treatment.id),
       onCompleteDose: (medication) => _completeDose(treatment, medication),
     );
+  }
+
+  Widget _buildPrescriptionCard(BuildContext context, Treatment prescription) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.purple.shade200, width: 2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.purple[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.medication, color: Colors.purple, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        prescription.name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${prescription.medications.length} medicamento${prescription.medications.length != 1 ? "s" : ""}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...prescription.medications.map((med) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.circle, size: 6, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${med.name} - ${med.dosage}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _activatePrescription(prescription),
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Activar Tratamiento'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _activatePrescription(Treatment prescription) async {
+    try {
+      await _firestore.collection('treatments').doc(prescription.id).update({
+        'prescriptionActivated': true,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tratamiento activado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al activar tratamiento: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildActionButton(
