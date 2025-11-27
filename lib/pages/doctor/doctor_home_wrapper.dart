@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'doctor_home_page.dart';
-import 'doctor_profile_page.dart';
+import 'doctor_profile_edit_page.dart';
+import 'doctor_profile_view_page.dart';
 import '../chatbot_page.dart';
 import '../about_page.dart';
 import '../settings_page.dart';
@@ -29,13 +29,13 @@ class _DoctorHomeWrapperState extends State<DoctorHomeWrapper> {
   final List<Widget> _pages = [
     const DoctorHomePage(),
     const ChatbotPage(),
-    const DoctorProfilePage(),
+    const DoctorProfileViewPage(),
   ];
 
   final List<String> _pageTitles = [
     'Lungly',
     'Chatbot',
-    'Mi Perfil Médico',
+    'Mi Perfil',
   ];
 
   @override
@@ -136,6 +136,19 @@ class _DoctorHomeWrapperState extends State<DoctorHomeWrapper> {
               ),
               const Divider(),
             ],
+            ListTile(
+              leading: const Icon(Icons.edit, color: Color(0xFF4990E2)),
+              title: const Text('Editar Perfil Médico'),
+              onTap: () async {
+                Navigator.pop(context);
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DoctorProfileEditPage(),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.payment),
               title: const Text('Métodos de Pago'),

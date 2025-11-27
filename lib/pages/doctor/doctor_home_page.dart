@@ -61,7 +61,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           .collection('appointments')
           .where('doctorId', isEqualTo: _userId)
           .where('status', isEqualTo: 'pending')
-          .orderBy('appointmentDate')
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -88,11 +87,25 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           );
         }
 
+        // Ordenar manualmente por appointmentDate
+        final docs = snapshot.data!.docs.toList();
+        docs.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+          final aDate = (aData['appointmentDate'] as Timestamp?)?.toDate();
+          final bDate = (bData['appointmentDate'] as Timestamp?)?.toDate();
+
+          if (aDate == null && bDate == null) return 0;
+          if (aDate == null) return 1;
+          if (bDate == null) return -1;
+          return aDate.compareTo(bDate);
+        });
+
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: docs.length,
           itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index];
+            final doc = docs[index];
             final data = doc.data() as Map<String, dynamic>;
 
             return _buildAppointmentCard(
@@ -112,7 +125,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           .collection('appointments')
           .where('doctorId', isEqualTo: _userId)
           .where('status', isEqualTo: 'confirmed')
-          .orderBy('appointmentDate')
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -139,11 +151,25 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           );
         }
 
+        // Ordenar manualmente por appointmentDate
+        final docs = snapshot.data!.docs.toList();
+        docs.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+          final aDate = (aData['appointmentDate'] as Timestamp?)?.toDate();
+          final bDate = (bData['appointmentDate'] as Timestamp?)?.toDate();
+
+          if (aDate == null && bDate == null) return 0;
+          if (aDate == null) return 1;
+          if (bDate == null) return -1;
+          return aDate.compareTo(bDate);
+        });
+
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: docs.length,
           itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index];
+            final doc = docs[index];
             final data = doc.data() as Map<String, dynamic>;
 
             return _buildAppointmentCard(

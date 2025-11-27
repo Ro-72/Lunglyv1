@@ -29,7 +29,12 @@ class _DoctorPreviewPageState extends State<DoctorPreviewPage> {
 
     try {
       final userId = _userId;
-      if (userId == null) return;
+      if (userId == null) {
+        print('DoctorPreviewPage: userId es null');
+        return;
+      }
+
+      print('DoctorPreviewPage: Buscando perfil para userId: $userId');
 
       // Buscar el perfil del doctor en la colección doctors
       final querySnapshot = await _firestore
@@ -38,13 +43,23 @@ class _DoctorPreviewPageState extends State<DoctorPreviewPage> {
           .limit(1)
           .get();
 
+      print('DoctorPreviewPage: Documentos encontrados: ${querySnapshot.docs.length}');
+
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
+        final data = doc.data();
+        print('DoctorPreviewPage: Datos del doctor: $data');
+
         setState(() {
-          _doctor = Doctor.fromMap(doc.data(), doc.id);
+          _doctor = Doctor.fromMap(data, doc.id);
         });
+        print('DoctorPreviewPage: Doctor cargado exitosamente');
+      } else {
+        print('DoctorPreviewPage: No se encontró ningún documento con userId: $userId');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('DoctorPreviewPage: Error al cargar perfil: $e');
+      print('DoctorPreviewPage: StackTrace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al cargar perfil: $e')),
