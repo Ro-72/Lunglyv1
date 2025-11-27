@@ -270,6 +270,9 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
   }
 
   Widget _buildAnswerCard(SpecialistAnswer answer) {
+    // Usar índice del nombre del doctor para generar el número de foto
+    final doctorPhotoIndex = _getPhotoIndexFromDoctorName(answer.doctorName);
+    
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -324,7 +327,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
               ),
             ),
             const SizedBox(height: 8),
-            // Respuesta del doctor
+            // Respuesta del doctor - CON FOTO DESDE ASSETS
             Row(
               children: [
                 CircleAvatar(
@@ -332,7 +335,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                   backgroundColor: Colors.green[100],
                   child: ClipOval(
                     child: Image.asset(
-                      answer.doctorPhoto,
+                      _getDoctorPhotoPath(doctorPhotoIndex),
                       width: 36,
                       height: 36,
                       fit: BoxFit.cover,
@@ -388,6 +391,9 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
   }
 
   void _showFullAnswerDialog(SpecialistAnswer answer) {
+    // Usar índice del nombre del doctor para generar el número de foto
+    final doctorPhotoIndex = _getPhotoIndexFromDoctorName(answer.doctorName);
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -456,7 +462,7 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
                       backgroundColor: Colors.green[100],
                       child: ClipOval(
                         child: Image.asset(
-                          answer.doctorPhoto,
+                          _getDoctorPhotoPath(doctorPhotoIndex),
                           width: 48,
                           height: 48,
                           fit: BoxFit.cover,
@@ -770,5 +776,22 @@ class _SpecialtySelectionPageState extends State<SpecialtySelectionPage> {
         ),
       ),
     );
+  }
+
+  String _getDoctorPhotoPath(int photoIndex) {
+    final doctorPhotos = [
+      'assets/photos/doctor1.jpg',
+      'assets/photos/doctor2.jpg',
+      'assets/photos/doctor3.jpg',
+      'assets/photos/doctor4.jpg',
+      'assets/photos/doctor5.jpg',
+    ];
+    return doctorPhotos[photoIndex % doctorPhotos.length];
+  }
+
+  int _getPhotoIndexFromDoctorName(String doctorName) {
+    // Generar índice de forma figurada basándose en el código hash del nombre
+    final hash = doctorName.hashCode.abs();
+    return hash % 5; // 5 fotos disponibles (doctor1 al doctor5)
   }
 }

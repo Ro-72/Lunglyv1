@@ -59,7 +59,7 @@ class MyAppointmentsPage extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('appointments')
             .where('patientId', isEqualTo: user.uid)
-            .orderBy('date', descending: false)
+            .orderBy('appointmentDate', descending: false)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -94,13 +94,17 @@ class MyAppointmentsPage extends StatelessWidget {
             );
           }
 
-          // Separar citas pasadas y futuras
+          // Separar citas próximas y pasadas
+          // Las citas confirmadas o completadas se consideran como pasadas
           final now = DateTime.now();
           final upcomingAppointments = appointments.where((apt) {
-            return apt.date.isAfter(now.subtract(const Duration(days: 1)));
+            return apt.status == 'pending' && apt.date.isAfter(now);
           }).toList();
+          
           final pastAppointments = appointments.where((apt) {
-            return apt.date.isBefore(now.subtract(const Duration(days: 1)));
+            return apt.status == 'confirmed' || 
+                   apt.status == 'completed' || 
+                   (apt.status == 'pending' && apt.date.isBefore(now));
           }).toList();
 
           return ListView(
@@ -197,7 +201,6 @@ class _AppointmentCard extends StatelessWidget {
                                 height: 60,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
-                                  // Si falla la red, usar imagen local
                                   return Image.asset(
                                     DoctorPhotoHelper.getDoctorPhotoPath(
                                         doctor?.photoNumber),

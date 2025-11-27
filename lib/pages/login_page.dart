@@ -162,8 +162,8 @@ class _LoginPageState extends State<LoginPage> {
     return ShaderMask(
       shaderCallback: (bounds) => const LinearGradient(
         colors: [
-          Color.fromRGBO(97, 6, 165, 1.0),
-          Color.fromRGBO(45, 160, 240, 1.0),
+          Color.fromRGBO(255, 255, 255, 1),
+          Color.fromRGBO(255, 255, 255, 1),
         ],
       ).createShader(bounds),
       child: const Text(
@@ -187,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         children: [
           TextSpan(
-            style: const TextStyle(color: Colors.deepOrange),
+            style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
             text: 'Regístrate aquí.',
             recognizer: TapGestureRecognizer()
               ..onTap = () => Navigator.push(
